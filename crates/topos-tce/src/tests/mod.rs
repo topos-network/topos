@@ -1,6 +1,6 @@
 use libp2p::PeerId;
 use rstest::{fixture, rstest};
-use std::{collections::HashSet, future::IntoFuture, sync::Arc};
+use std::{collections::HashSet, future::IntoFuture, sync::Arc, time::Duration};
 use tokio_stream::Stream;
 use topos_tce_api::RuntimeEvent;
 use topos_tce_broadcast::event::ProtocolEvents;
@@ -41,8 +41,8 @@ async fn non_validator_publish_gossip(
         .await;
 
     assert!(matches!(
-        p2p_receiver.try_recv(),
-        Ok(topos_p2p::Command::Gossip { topic, .. }) if topic == "topos_gossip"
+        p2p_receiver.recv().await,
+        Some(topos_p2p::Command::Gossip { topic, .. }) if topic == "topos_gossip"
     ));
 }
 
@@ -64,7 +64,11 @@ async fn non_validator_do_not_publish_echo(
         })
         .await;
 
-    assert!(p2p_receiver.try_recv().is_err(),);
+    assert!(
+        tokio::time::timeout(Duration::from_millis(10), p2p_receiver.recv())
+            .await
+            .is_err()
+    );
 }
 
 #[rstest]
@@ -85,7 +89,11 @@ async fn non_validator_do_not_publish_ready(
         })
         .await;
 
-    assert!(p2p_receiver.try_recv().is_err(),);
+    assert!(
+        tokio::time::timeout(Duration::from_millis(10), p2p_receiver.recv())
+            .await
+            .is_err()
+    );
 }
 
 #[fixture]
