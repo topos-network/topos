@@ -349,7 +349,7 @@ pub async fn run(
                     //     [rand::random::<usize>() % target_nodes.len()];
 
                     for connection in &target_node_connections[&cert.source_subnet_id] {
-                        debug!(
+                        info!(
                             "Sending certificate {cert:?} to target node {}",
                             connection.address
                         );
