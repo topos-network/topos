@@ -304,7 +304,7 @@ pub async fn run(
                 number_of_peer_nodes
             );
             async {
-                info!("Starting batch {batch_number}");
+                info!("Start batch {batch_number}");
 
                 let mut batch: Vec<Certificate> = Vec::new(); // Certificates for this batch
                 for b in 0..args.cert_per_batch {
