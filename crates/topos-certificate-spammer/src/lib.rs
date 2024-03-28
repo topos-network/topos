@@ -340,7 +340,7 @@ pub async fn run(
                     debug!("New cert number {b} in batch {batch_number} generated");
                     batch.push(new_cert);
                 }
-                
+
                 // Dispatch certs in this batch
                 // Dispatch certs in this batch
                 for cert in batch {
@@ -349,6 +349,10 @@ pub async fn run(
                     //     [rand::random::<usize>() % target_nodes.len()];
 
                     for connection in &target_node_connections[&cert.source_subnet_id] {
+                        debug!(
+                            "Sending certificate {cert:?} to target node {}",
+                            connection.address
+                        );
                         dispatch(cert.clone(), connection)
                             .instrument(Span::current())
                             .with_current_context()
