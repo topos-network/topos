@@ -1,8 +1,8 @@
-name: Build and host documentation on GH pages
+name: Topos - Build and host documentation on GH pages
 on:
   push:
     branches:
-      - main
+      - feat/TP-888
 
 jobs:
   build:

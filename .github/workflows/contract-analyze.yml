@@ -1,0 +1,20 @@
+name: Contracts - Analyze
+
+on:
+  push:
+    branches: 'feat/TP-888'
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  lint:
+    name: Analyze
+    runs-on: ubuntu-latest-16-core
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: crytic/slither-action@v0.3.0
+        with:
+          node-version: 16
+          target: ./contracts
+          slither-config: ./contracts/slither.config.json

@@ -12,8 +12,7 @@ use tracing::info;
 
 abigen!(
     IToposCore,
-    "npm:@topos-protocol/topos-smart-contracts@3.4.0-rc.1/artifacts/contracts/interfaces/\
-     IToposCore.sol/IToposCore.json"
+    "../../contracts/artifacts/contracts/interfaces/IToposCore.sol/IToposCore.json"
 );
 
 pub(crate) fn create_topos_core_contract_from_json<T: Middleware>(

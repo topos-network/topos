@@ -13,4 +13,12 @@
 !tools/config/nextest.toml
 !.git
 
+# Allow contract related code
+!contracts/contracts/**/*
+!contracts/hardhat.config.ts
+!contracts/package*.json
+!contracts/scripts/**/*
+!contracts/tsconfig.json
+!contracts/typechain-types/**/*
+
 !LICENSE

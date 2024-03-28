@@ -1,0 +1,12 @@
+#Hardhat
+artifacts
+cache
+coverage
+typechain-types
+coverage.json
+
+# Npm
+node_modules
+
+# Visual Studio Code
+.vscode

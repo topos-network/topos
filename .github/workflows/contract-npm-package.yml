@@ -1,0 +1,22 @@
+name: Contracts - Publish Package to NPM Registry
+on:
+  release:
+    types: [published]
+jobs:
+  npm-package:
+    runs-on: ubuntu-latest-16-core
+    defaults:
+      run:
+        working-directory: ./contracts
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '16.x'
+          registry-url: 'https://registry.npmjs.org'
+          scope: '@topos-protocol'
+      - run: npm ci
+      - run: npm run build
+      - run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

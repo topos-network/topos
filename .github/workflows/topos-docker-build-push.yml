@@ -1,8 +1,8 @@
-name: Docker build and push
+name: Topos - Docker build and push
 
 on:
   push:
-    branches: [main, debug/**]
+    branches: [main, debug/**, feat/TP-888]
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
   release:
@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   docker:
-    uses: ./.github/workflows/docker_utils.yml
+    uses: ./.github/workflows/topos-docker-utils.yml
     secrets: inherit
 
   integration-erc20-e2e:

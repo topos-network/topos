@@ -1,4 +1,4 @@
-name: template - docker
+name: Topos - Docker template
 
 env:
   REGISTRY: ghcr.io

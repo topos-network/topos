@@ -1,4 +1,4 @@
-name: Release
+name: Topos - Release
 
 on:
   release:

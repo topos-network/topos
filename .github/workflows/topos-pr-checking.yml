@@ -1,4 +1,4 @@
-name: Checking PR semantic
+name: Topos - Checking PR semantic
 
 on:
   pull_request_target:

@@ -1,8 +1,8 @@
-name: Sequencer Topos Core Contract interaction test
+name: Topos - Sequencer Topos Core Contract interaction test
 
 on:
   push:
-    branches: [main]
+    branches: [main, feat/TP-888]
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
   workflow_dispatch:
