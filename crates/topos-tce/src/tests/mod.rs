@@ -1,12 +1,15 @@
 use libp2p::PeerId;
 use rstest::{fixture, rstest};
-use std::{collections::HashSet, future::IntoFuture, sync::Arc};
+use std::{collections::HashSet, future::IntoFuture, sync::Arc, time::Duration};
 use tokio_stream::Stream;
 use topos_tce_api::RuntimeEvent;
 use topos_tce_broadcast::event::ProtocolEvents;
 use topos_tce_gatekeeper::Gatekeeper;
 
-use tokio::sync::{broadcast, mpsc};
+use tokio::{
+    spawn,
+    sync::{broadcast, mpsc},
+};
 use topos_crypto::messages::MessageSigner;
 use topos_p2p::{utils::GrpcOverP2P, NetworkClient};
 use topos_tce_broadcast::{ReliableBroadcastClient, ReliableBroadcastConfig};
@@ -24,7 +27,8 @@ mod api;
 mod network;
 
 #[rstest]
-#[tokio::test]
+#[test_log::test(tokio::test)]
+#[timeout(Duration::from_secs(1))]
 async fn non_validator_publish_gossip(
     #[future] setup_test: (
         AppContext,
@@ -34,20 +38,23 @@ async fn non_validator_publish_gossip(
 ) {
     let (mut context, mut p2p_receiver, _) = setup_test.await;
     let certificates = create_certificate_chain(SOURCE_SUBNET_ID_1, &[TARGET_SUBNET_ID_1], 1);
-    context
-        .on_protocol_event(ProtocolEvents::Gossip {
-            cert: certificates[0].certificate.clone(),
-        })
-        .await;
+    spawn(async move {
+        _ = context
+            .on_protocol_event(ProtocolEvents::Gossip {
+                cert: certificates[0].certificate.clone(),
+            })
+            .await;
+    });
 
     assert!(matches!(
-        p2p_receiver.try_recv(),
-        Ok(topos_p2p::Command::Gossip { topic, .. }) if topic == "topos_gossip"
+        p2p_receiver.recv().await,
+        Some(topos_p2p::Command::Gossip { topic, .. }) if topic == "topos_gossip"
     ));
 }
 
 #[rstest]
 #[tokio::test]
+#[timeout(Duration::from_secs(1))]
 async fn non_validator_do_not_publish_echo(
     #[future] setup_test: (
         AppContext,
@@ -56,19 +63,25 @@ async fn non_validator_do_not_publish_echo(
     ),
 ) {
     let (mut context, mut p2p_receiver, message_signer) = setup_test.await;
-    context
-        .on_protocol_event(ProtocolEvents::Echo {
-            certificate_id: CERTIFICATE_ID_1,
-            signature: message_signer.sign_message(&[]).ok().unwrap(),
-            validator_id: message_signer.public_address.into(),
-        })
-        .await;
+    spawn(async move {
+        context
+            .on_protocol_event(ProtocolEvents::Echo {
+                certificate_id: CERTIFICATE_ID_1,
+                signature: message_signer.sign_message(&[]).ok().unwrap(),
+                validator_id: message_signer.public_address.into(),
+            })
+            .await;
+    });
 
-    assert!(p2p_receiver.try_recv().is_err(),);
+    assert!(matches!(
+        tokio::time::timeout(Duration::from_millis(10), p2p_receiver.recv()).await,
+        Ok(None)
+    ));
 }
 
 #[rstest]
 #[tokio::test]
+#[timeout(Duration::from_secs(1))]
 async fn non_validator_do_not_publish_ready(
     #[future] setup_test: (
         AppContext,
@@ -77,15 +90,20 @@ async fn non_validator_do_not_publish_ready(
     ),
 ) {
     let (mut context, mut p2p_receiver, message_signer) = setup_test.await;
-    context
-        .on_protocol_event(ProtocolEvents::Ready {
-            certificate_id: CERTIFICATE_ID_1,
-            signature: message_signer.sign_message(&[]).ok().unwrap(),
-            validator_id: message_signer.public_address.into(),
-        })
-        .await;
+    spawn(async move {
+        context
+            .on_protocol_event(ProtocolEvents::Ready {
+                certificate_id: CERTIFICATE_ID_1,
+                signature: message_signer.sign_message(&[]).ok().unwrap(),
+                validator_id: message_signer.public_address.into(),
+            })
+            .await;
+    });
 
-    assert!(p2p_receiver.try_recv().is_err(),);
+    assert!(matches!(
+        tokio::time::timeout(Duration::from_millis(10), p2p_receiver.recv()).await,
+        Ok(None)
+    ));
 }
 
 #[fixture]

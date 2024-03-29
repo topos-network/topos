@@ -39,6 +39,7 @@ async fn handle_gossip(
         .on_net_event(topos_p2p::Event::Gossip {
             from: PeerId::random(),
             data: msg.encode_to_vec(),
+            id: "0".to_string(),
         })
         .await;
 }
@@ -68,6 +69,7 @@ async fn handle_echo(
         .on_net_event(topos_p2p::Event::Gossip {
             from: PeerId::random(),
             data: msg.encode_to_vec(),
+            id: "0".to_string(),
         })
         .await;
 }
@@ -97,6 +99,7 @@ async fn handle_ready(
         .on_net_event(topos_p2p::Event::Gossip {
             from: PeerId::random(),
             data: msg.encode_to_vec(),
+            id: "0".to_string(),
         })
         .await;
 }
@@ -130,6 +133,7 @@ async fn handle_already_delivered(
         .on_net_event(topos_p2p::Event::Gossip {
             from: PeerId::random(),
             data: msg.encode_to_vec(),
+            id: "0".to_string(),
         })
         .await;
 }

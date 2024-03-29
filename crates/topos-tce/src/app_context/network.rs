@@ -22,7 +22,7 @@ impl AppContext {
             &evt
         );
 
-        if let NetEvent::Gossip { data, from } = evt {
+        if let NetEvent::Gossip { data, from, id } = evt {
             if let Ok(DoubleEchoRequest {
                 request: Some(double_echo_request),
             }) = DoubleEchoRequest::decode(&data[..])
@@ -38,14 +38,18 @@ impl AppContext {
                                 entry.insert(CERTIFICATE_DELIVERY_LATENCY.start_timer());
                             }
                             info!(
-                                "Received certificate {} from GossipSub from {}",
-                                cert.id, from
+                                message_id = id,
+                                "Received certificate {} from GossipSub message({}) from {}",
+                                cert.id,
+                                id,
+                                from
                             );
 
                             match self.validator_store.insert_pending_certificate(&cert).await {
                                 Ok(Some(pending_id)) => {
                                     let certificate_id = cert.id;
                                     debug!(
+                                        message_id = id,
                                         "Certificate {} has been inserted into pending pool",
                                         certificate_id
                                     );
@@ -62,6 +66,7 @@ impl AppContext {
                                         .is_err()
                                     {
                                         error!(
+                                            message_id = id,
                                             "Unable to send DoubleEchoCommand::Broadcast command \
                                              to double echo for {}",
                                             certificate_id
@@ -71,15 +76,19 @@ impl AppContext {
 
                                 Ok(None) => {
                                     debug!(
+                                        message_id = id,
                                         "Certificate {} from subnet {} has been inserted into \
                                          precedence pool waiting for {}",
-                                        cert.id, cert.source_subnet_id, cert.prev_id
+                                        cert.id,
+                                        cert.source_subnet_id,
+                                        cert.prev_id
                                     );
                                 }
                                 Err(StorageError::InternalStorage(
                                     InternalStorageError::CertificateAlreadyPending,
                                 )) => {
                                     debug!(
+                                        message_id = id,
                                         "Certificate {} has been already added to the pending \
                                          pool, skipping",
                                         cert.id
@@ -89,20 +98,26 @@ impl AppContext {
                                     InternalStorageError::CertificateAlreadyExists,
                                 )) => {
                                     debug!(
+                                        message_id = id,
                                         "Certificate {} has been already delivered, skipping",
                                         cert.id
                                     );
                                 }
                                 Err(error) => {
                                     error!(
+                                        message_id = id,
                                         "Unable to insert pending certificate {}: {}",
-                                        cert.id, error
+                                        cert.id,
+                                        error
                                     );
                                 }
                             }
                         }
                         Err(e) => {
-                            error!("Failed to parse the received Certificate: {e}");
+                            error!(
+                                message_id = id,
+                                "Failed to parse the received Certificate: {e}"
+                            );
                         }
                     },
                     double_echo_request::Request::Echo(Echo {
@@ -114,6 +129,7 @@ impl AppContext {
                         spawn(async move {
                             let certificate_id = certificate_id.clone().try_into().map_err(|e| {
                                 error!(
+                                    message_id = id,
                                     "Failed to parse the CertificateId {certificate_id} from \
                                      Echo: {e}"
                                 );
@@ -121,6 +137,7 @@ impl AppContext {
                             });
                             let validator_id = validator_id.clone().try_into().map_err(|e| {
                                 error!(
+                                    message_id = id,
                                     "Failed to parse the ValidatorId {validator_id} from Echo: {e}"
                                 );
                                 e
@@ -129,11 +146,10 @@ impl AppContext {
                             if let (Ok(certificate_id), Ok(validator_id)) =
                                 (certificate_id, validator_id)
                             {
-                                trace!(
-                                    "Received Echo message, certificate_id: {certificate_id}, \
-                                     validator_id: {validator_id} from: {from}",
-                                    certificate_id = certificate_id,
-                                    validator_id = validator_id
+                                debug!(
+                                    message_id = id,
+                                    "Received Echo message({id}), certificate_id: \
+                                     {certificate_id}, validator_id: {validator_id} from: {from}",
                                 );
 
                                 if let Err(e) = channel
@@ -144,10 +160,16 @@ impl AppContext {
                                     })
                                     .await
                                 {
-                                    error!("Unable to pass received Echo message: {:?}", e);
+                                    error!(
+                                        message_id = id,
+                                        "Unable to pass received Echo message: {:?}", e
+                                    );
                                 }
                             } else {
-                                error!("Unable to process Echo message due to invalid data");
+                                error!(
+                                    message_id = id,
+                                    "Unable to process Echo message due to invalid data"
+                                );
                             }
                         });
                     }
@@ -160,6 +182,7 @@ impl AppContext {
                         spawn(async move {
                             let certificate_id = certificate_id.clone().try_into().map_err(|e| {
                                 error!(
+                                    message_id = id,
                                     "Failed to parse the CertificateId {certificate_id} from \
                                      Ready: {e}"
                                 );
@@ -167,6 +190,7 @@ impl AppContext {
                             });
                             let validator_id = validator_id.clone().try_into().map_err(|e| {
                                 error!(
+                                    message_id = id,
                                     "Failed to parse the ValidatorId {validator_id} from Ready: \
                                      {e}"
                                 );
@@ -176,10 +200,9 @@ impl AppContext {
                                 (certificate_id, validator_id)
                             {
                                 trace!(
-                                    "Received Ready message, certificate_id: {certificate_id}, \
-                                     validator_id: {validator_id} from: {from}",
-                                    certificate_id = certificate_id,
-                                    validator_id = validator_id
+                                    message_id = id,
+                                    "Received Ready message({id}), certificate_id: \
+                                     {certificate_id}, validator_id: {validator_id} from: {from}",
                                 );
                                 if let Err(e) = channel
                                     .send(DoubleEchoCommand::Ready {
@@ -189,10 +212,16 @@ impl AppContext {
                                     })
                                     .await
                                 {
-                                    error!("Unable to pass received Ready message: {:?}", e);
+                                    error!(
+                                        message_id = id,
+                                        "Unable to pass received Ready message: {:?}", e
+                                    );
                                 }
                             } else {
-                                error!("Unable to process Ready message due to invalid data");
+                                error!(
+                                    message_id = id,
+                                    "Unable to process Ready message due to invalid data"
+                                );
                             }
                         });
                     }
