@@ -22,7 +22,13 @@ impl AppContext {
             &evt
         );
 
-        if let NetEvent::Gossip { data, from, id } = evt {
+        if let NetEvent::Gossip {
+            data,
+            propagated_by: received_from,
+            from,
+            id,
+        } = evt
+        {
             if let Ok(DoubleEchoRequest {
                 request: Some(double_echo_request),
             }) = DoubleEchoRequest::decode(&data[..])
@@ -39,10 +45,8 @@ impl AppContext {
                             }
                             info!(
                                 message_id = id,
-                                "Received certificate {} from GossipSub message({}) from {}",
+                                "Received certificate {} from GossipSub message({id}) from {from} | propagated by {received_from}",
                                 cert.id,
-                                id,
-                                from
                             );
 
                             match self.validator_store.insert_pending_certificate(&cert).await {
@@ -199,7 +203,7 @@ impl AppContext {
                             if let (Ok(certificate_id), Ok(validator_id)) =
                                 (certificate_id, validator_id)
                             {
-                                trace!(
+                                debug!(
                                     message_id = id,
                                     "Received Ready message({id}), certificate_id: \
                                      {certificate_id}, validator_id: {validator_id} from: {from}",

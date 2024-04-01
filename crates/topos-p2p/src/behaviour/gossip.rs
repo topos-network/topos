@@ -34,8 +34,14 @@ impl Behaviour {
     ) -> Result<MessageId, P2PError> {
         match topic {
             TOPOS_GOSSIP | TOPOS_ECHO | TOPOS_READY => {
-                let msg_id = self.gossipsub.publish(IdentTopic::new(topic), message)?;
+                let topic = IdentTopic::new(topic);
+                let topic_hash = topic.hash();
+                let msg_id = self.gossipsub.publish(topic, message)?;
                 trace!("Published on topos_gossip: {:?}", msg_id);
+
+                for p in self.gossipsub.mesh_peers(&topic_hash) {
+                    debug!("Sent gossipsub message({}) to {} peer", msg_id, p);
+                }
 
                 Ok(msg_id)
             }
@@ -175,32 +181,35 @@ impl NetworkBehaviour for Behaviour {
                 } => match topic.as_str() {
                     TOPOS_GOSSIP => {
                         return Poll::Ready(ToSwarm::GenerateEvent(ComposedEvent::Gossipsub(
-                            crate::event::GossipEvent::Message {
+                            Box::new(crate::event::GossipEvent::Message {
+                                propagated_by: propagation_source,
                                 topic: TOPOS_GOSSIP,
                                 message: data,
                                 source,
                                 id: message_id,
-                            },
+                            }),
                         )))
                     }
                     TOPOS_ECHO => {
                         return Poll::Ready(ToSwarm::GenerateEvent(ComposedEvent::Gossipsub(
-                            crate::event::GossipEvent::Message {
+                            Box::new(crate::event::GossipEvent::Message {
+                                propagated_by: propagation_source,
                                 topic: TOPOS_ECHO,
                                 message: data,
                                 source,
                                 id: message_id,
-                            },
+                            }),
                         )))
                     }
                     TOPOS_READY => {
                         return Poll::Ready(ToSwarm::GenerateEvent(ComposedEvent::Gossipsub(
-                            crate::event::GossipEvent::Message {
+                            Box::new(crate::event::GossipEvent::Message {
+                                propagated_by: propagation_source,
                                 topic: TOPOS_READY,
                                 message: data,
                                 source,
                                 id: message_id,
-                            },
+                            }),
                         )))
                     }
                     _ => {}
