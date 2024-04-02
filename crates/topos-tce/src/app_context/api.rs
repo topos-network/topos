@@ -11,7 +11,7 @@ use tracing::debug;
 use tracing::{error, warn};
 
 impl AppContext {
-    pub async fn on_api_event(&mut self, event: ApiEvent) {
+    pub(crate) async fn on_api_event(&mut self, event: ApiEvent) {
         match event {
             ApiEvent::CertificateSubmitted {
                 certificate,

@@ -15,7 +15,7 @@ use topos_core::uci;
 use crate::AppContext;
 
 impl AppContext {
-    pub async fn on_net_event(&mut self, evt: NetEvent) {
+    pub(crate) async fn on_net_event(&mut self, evt: NetEvent) {
         trace!(
             "on_net_event: peer: {} event {:?}",
             &self.network_client.local_peer_id,

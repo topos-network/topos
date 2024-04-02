@@ -132,7 +132,7 @@ pub async fn setup_test(
 
     let (gatekeeper_client, _) = Gatekeeper::builder().into_future().await.unwrap();
 
-    let (context, _) = AppContext::new(
+    let context = AppContext::new(
         is_validator,
         StorageClient::new(validator_store.clone()),
         tce_cli,

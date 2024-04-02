@@ -34,7 +34,7 @@ use topos_core::types::ValidatorId;
 use topos_core::uci::SubnetId;
 use topos_crypto::messages::MessageSigner;
 use topos_p2p::{error::P2PError, Event, GrpcRouter, NetworkClient, Runtime};
-use topos_tce::{events::Events, AppContext};
+use topos_tce::AppContext;
 use topos_tce_storage::StorageClient;
 use topos_tce_synchronizer::SynchronizerService;
 use tracing::info;
@@ -58,7 +58,6 @@ pub mod synchronizer;
 #[derive(Debug)]
 pub struct TceContext {
     pub node_config: NodeConfig,
-    pub event_stream: mpsc::Receiver<Events>,
     pub peer_id: PeerId, // P2P ID
     pub api_entrypoint: String,
     pub api_grpc_client: ApiServiceClient<Channel>, // GRPC Client for this peer (tce node)
@@ -281,7 +280,7 @@ pub async fn start_node(
     .in_current_span()
     .await;
 
-    let (app, event_stream) = AppContext::new(
+    let app = AppContext::new(
         is_validator,
         storage_client,
         tce_cli,
@@ -311,7 +310,6 @@ pub async fn start_node(
 
     TceContext {
         node_config: config,
-        event_stream,
         peer_id,
         api_entrypoint: api_context.entrypoint,
         api_grpc_client: api_context.api_client,

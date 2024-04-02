@@ -5,7 +5,7 @@ use tracing::{error, info, warn};
 use crate::AppContext;
 
 impl AppContext {
-    pub async fn on_protocol_event(&mut self, evt: ProtocolEvents) {
+    pub(crate) async fn on_protocol_event(&mut self, evt: ProtocolEvents) {
         match evt {
             ProtocolEvents::Broadcast { certificate_id } => {
                 info!("Broadcasting certificate {}", certificate_id);

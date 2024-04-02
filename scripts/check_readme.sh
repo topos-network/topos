@@ -14,3 +14,4 @@ function check {
 
 check crates/topos-tce-broadcast
 check crates/topos-tce-storage
+check crates/topos-tce

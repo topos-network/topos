@@ -1,7 +1,6 @@
 //!
 //! Application logic glue
 //!
-use crate::events::Events;
 use futures::{Stream, StreamExt};
 use prometheus::HistogramTimer;
 use std::collections::HashMap;
@@ -37,18 +36,19 @@ pub(crate) mod protocol;
 /// config+data as input and runs app returning data as output
 ///
 pub struct AppContext {
-    pub is_validator: bool,
-    pub events: mpsc::Sender<Events>,
-    pub tce_cli: ReliableBroadcastClient,
-    pub network_client: NetworkClient,
-    pub api_client: ApiClient,
-    pub pending_storage: StorageClient,
-    pub gatekeeper: GatekeeperClient,
+    pub(crate) is_validator: bool,
+    pub(crate) tce_cli: ReliableBroadcastClient,
+    pub(crate) network_client: NetworkClient,
+    pub(crate) api_client: ApiClient,
+    pub(crate) pending_storage: StorageClient,
+    pub(crate) gatekeeper: GatekeeperClient,
 
-    pub delivery_latency: HashMap<CertificateId, HistogramTimer>,
+    pub(crate) delivery_latency: HashMap<CertificateId, HistogramTimer>,
 
-    pub validator_store: Arc<ValidatorStore>,
-    pub api_context: RuntimeContext,
+    pub(crate) validator_store: Arc<ValidatorStore>,
+    // Hold the api context, cleaning up when Drop
+    #[allow(unused)]
+    pub(crate) api_context: RuntimeContext,
 }
 
 impl AppContext {
@@ -68,23 +68,18 @@ impl AppContext {
         gatekeeper: GatekeeperClient,
         validator_store: Arc<ValidatorStore>,
         api_context: RuntimeContext,
-    ) -> (Self, mpsc::Receiver<Events>) {
-        let (events, receiver) = mpsc::channel(100);
-        (
-            Self {
-                is_validator,
-                events,
-                tce_cli,
-                network_client,
-                api_client,
-                pending_storage,
-                gatekeeper,
-                delivery_latency: Default::default(),
-                validator_store,
-                api_context,
-            },
-            receiver,
-        )
+    ) -> Self {
+        Self {
+            is_validator,
+            tce_cli,
+            network_client,
+            api_client,
+            pending_storage,
+            gatekeeper,
+            delivery_latency: Default::default(),
+            validator_store,
+            api_context,
+        }
     }
 
     /// Main processing loop
