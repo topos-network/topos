@@ -37,7 +37,7 @@ jobs:
           workflow_file_name: topos:integration-tests.yml
           ref: main
           wait_interval: 60
-          client_payload: '{ "topos-docker-tag": "${{ env.docker_tag }}", "topos-smart-contracts-docker-tag": "main" }'
+          client_payload: '{ "topos-docker-tag": "${{ env.docker_tag }}" }'
 
   frontend-erc20-e2e:
     runs-on: ubuntu-latest
@@ -59,4 +59,4 @@ jobs:
           workflow_file_name: frontend:erc20-messaging.yml
           ref: main
           wait_interval: 60
-          client_payload: '{ "topos-docker-tag": "${{ env.docker_tag }}", "topos-smart-contracts-docker-tag": "main" }'
+          client_payload: '{ "topos-docker-tag": "${{ env.docker_tag }}" }'

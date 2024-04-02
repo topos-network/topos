@@ -19,4 +19,4 @@ jobs:
           workflow_file_name: topos:sequencer-contracts.yml
           ref: main
           wait_interval: 60
-          client_payload: '{ "topos-ref": "${{ github.head_ref }}", "topos-smart-contracts-ref": "main" }'
+          client_payload: '{ "topos-ref": "${{ github.head_ref }}" }'
