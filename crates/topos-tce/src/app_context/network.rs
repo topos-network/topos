@@ -37,69 +37,71 @@ impl AppContext {
                             {
                                 entry.insert(CERTIFICATE_DELIVERY_LATENCY.start_timer());
                             }
-                            info!(
-                                "Received certificate {} from GossipSub from {}",
-                                cert.id, from
-                            );
+                            let validator_store = self.validator_store.clone();
+                            let double_echo = self.tce_cli.get_double_echo_channel();
+                            spawn(async move {
+                                info!(
+                                    "Received certificate {} from GossipSub from {}",
+                                    cert.id, from
+                                );
 
-                            match self.validator_store.insert_pending_certificate(&cert).await {
-                                Ok(Some(pending_id)) => {
-                                    let certificate_id = cert.id;
-                                    debug!(
-                                        "Certificate {} has been inserted into pending pool",
-                                        certificate_id
-                                    );
-
-                                    if self
-                                        .tce_cli
-                                        .get_double_echo_channel()
-                                        .send(DoubleEchoCommand::Broadcast {
-                                            need_gossip: false,
-                                            cert,
-                                            pending_id,
-                                        })
-                                        .await
-                                        .is_err()
-                                    {
-                                        error!(
-                                            "Unable to send DoubleEchoCommand::Broadcast command \
-                                             to double echo for {}",
+                                match validator_store.insert_pending_certificate(&cert).await {
+                                    Ok(Some(pending_id)) => {
+                                        let certificate_id = cert.id;
+                                        debug!(
+                                            "Certificate {} has been inserted into pending pool",
                                             certificate_id
+                                        );
+
+                                        if double_echo
+                                            .send(DoubleEchoCommand::Broadcast {
+                                                need_gossip: false,
+                                                cert,
+                                                pending_id,
+                                            })
+                                            .await
+                                            .is_err()
+                                        {
+                                            error!(
+                                                "Unable to send DoubleEchoCommand::Broadcast \
+                                                 command to double echo for {}",
+                                                certificate_id
+                                            );
+                                        }
+                                    }
+
+                                    Ok(None) => {
+                                        debug!(
+                                            "Certificate {} from subnet {} has been inserted into \
+                                             precedence pool waiting for {}",
+                                            cert.id, cert.source_subnet_id, cert.prev_id
+                                        );
+                                    }
+                                    Err(StorageError::InternalStorage(
+                                        InternalStorageError::CertificateAlreadyPending,
+                                    )) => {
+                                        debug!(
+                                            "Certificate {} has been already added to the pending \
+                                             pool, skipping",
+                                            cert.id
+                                        );
+                                    }
+                                    Err(StorageError::InternalStorage(
+                                        InternalStorageError::CertificateAlreadyExists,
+                                    )) => {
+                                        debug!(
+                                            "Certificate {} has been already delivered, skipping",
+                                            cert.id
+                                        );
+                                    }
+                                    Err(error) => {
+                                        error!(
+                                            "Unable to insert pending certificate {}: {}",
+                                            cert.id, error
                                         );
                                     }
                                 }
-
-                                Ok(None) => {
-                                    debug!(
-                                        "Certificate {} from subnet {} has been inserted into \
-                                         precedence pool waiting for {}",
-                                        cert.id, cert.source_subnet_id, cert.prev_id
-                                    );
-                                }
-                                Err(StorageError::InternalStorage(
-                                    InternalStorageError::CertificateAlreadyPending,
-                                )) => {
-                                    debug!(
-                                        "Certificate {} has been already added to the pending \
-                                         pool, skipping",
-                                        cert.id
-                                    );
-                                }
-                                Err(StorageError::InternalStorage(
-                                    InternalStorageError::CertificateAlreadyExists,
-                                )) => {
-                                    debug!(
-                                        "Certificate {} has been already delivered, skipping",
-                                        cert.id
-                                    );
-                                }
-                                Err(error) => {
-                                    error!(
-                                        "Unable to insert pending certificate {}: {}",
-                                        cert.id, error
-                                    );
-                                }
-                            }
+                            });
                         }
                         Err(e) => {
                             error!("Failed to parse the received Certificate: {e}");
