@@ -4,18 +4,18 @@ on:
   push:
     branches:
       - main
+      - "!release/**"
     paths: crates/**
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
     paths: crates/**
-    branches-ignore:
-      - "release/**"
   workflow_dispatch:
 
 jobs:
   codecov:
     name: Code coverage
     runs-on: ubuntu-latest-16-core
+    if: ${{ ! startsWith(github.head_ref, 'release') }}
 
     steps:
       - uses: actions/checkout@v4
