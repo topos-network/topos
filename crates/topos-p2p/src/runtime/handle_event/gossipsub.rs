@@ -24,8 +24,11 @@ impl EventHandler<Box<GossipEvent>> for Runtime {
             }
 
             debug!(
-                "Received message({id}) from source {:?} on topic {:?} propagated by {propagated_by}",
-                source, topic
+                message_id = id.to_string(),
+                local_peer_id = self.local_peer_id.to_string(),
+                propagated_by = propagated_by.to_string(),
+                "Received message({id}) from source {source} on topic {:?} propagated by {propagated_by}",
+                topic
             );
 
             match topic {
