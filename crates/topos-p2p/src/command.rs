@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use libp2p::PeerId;
+use libp2p::{gossipsub::MessageId, PeerId};
 use tokio::sync::oneshot;
 
 use crate::{behaviour::grpc::connection::OutboundConnection, error::P2PError};
@@ -15,6 +15,7 @@ pub enum Command {
     Gossip {
         topic: &'static str,
         data: Vec<u8>,
+        sender: oneshot::Sender<Result<MessageId, P2PError>>,
     },
 
     /// Ask for the creation of a new proxy connection for a gRPC query.

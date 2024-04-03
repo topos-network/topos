@@ -1,4 +1,4 @@
-use libp2p::{identify, kad, PeerId};
+use libp2p::{gossipsub::MessageId, identify, kad, PeerId};
 
 use crate::behaviour::{grpc, HealthStatus};
 
@@ -7,9 +7,11 @@ use crate::behaviour::{grpc, HealthStatus};
 pub enum GossipEvent {
     /// A message has been received from a peer on one of the subscribed topics
     Message {
+        propagated_by: PeerId,
         source: Option<PeerId>,
         topic: &'static str,
         message: Vec<u8>,
+        id: MessageId,
     },
 }
 
@@ -17,7 +19,7 @@ pub enum GossipEvent {
 pub enum ComposedEvent {
     Kademlia(Box<kad::Event>),
     PeerInfo(Box<identify::Event>),
-    Gossipsub(GossipEvent),
+    Gossipsub(Box<GossipEvent>),
     Grpc(grpc::Event),
     Void,
 }
@@ -48,9 +50,15 @@ impl From<void::Void> for ComposedEvent {
 
 /// Represents the events that the p2p layer can emit
 #[derive(Debug)]
+#[allow(clippy::large_enum_variant)]
 pub enum Event {
     /// An event emitted when a gossip message is received
-    Gossip { from: PeerId, data: Vec<u8> },
+    Gossip {
+        propagated_by: PeerId,
+        from: PeerId,
+        data: Vec<u8>,
+        id: String,
+    },
     /// An event emitted when the p2p layer becomes healthy
     Healthy,
     /// An event emitted when the p2p layer becomes unhealthy

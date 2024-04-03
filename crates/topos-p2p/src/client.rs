@@ -1,4 +1,4 @@
-use futures::future::BoxFuture;
+use futures::TryFutureExt;
 use libp2p::PeerId;
 use tokio::sync::{
     mpsc::{self, error::SendError},
@@ -39,21 +39,24 @@ impl NetworkClient {
         .await
     }
 
-    pub fn publish<T: std::fmt::Debug + prost::Message + 'static>(
+    pub async fn publish<T: std::fmt::Debug + prost::Message + 'static>(
         &self,
         topic: &'static str,
         message: T,
-    ) -> BoxFuture<'static, Result<(), SendError<Command>>> {
+    ) -> Result<String, P2PError> {
         let network = self.sender.clone();
+        let (sender, receiver) = oneshot::channel();
 
-        Box::pin(async move {
-            network
-                .send(Command::Gossip {
-                    topic,
-                    data: message.encode_to_vec(),
-                })
-                .await
-        })
+        network
+            .send(Command::Gossip {
+                topic,
+                data: message.encode_to_vec(),
+                sender,
+            })
+            .map_err(CommandExecutionError::from)
+            .await?;
+
+        receiver.await?.map(|id| id.to_string())
     }
 
     async fn send_command_with_receiver<

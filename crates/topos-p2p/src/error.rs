@@ -1,8 +1,11 @@
 use std::io;
 
 use libp2p::{
-    gossipsub::SubscriptionError, kad::NoKnownPeers, noise::Error as NoiseError,
-    request_response::OutboundFailure, TransportError,
+    gossipsub::{PublishError, SubscriptionError},
+    kad::NoKnownPeers,
+    noise::Error as NoiseError,
+    request_response::OutboundFailure,
+    TransportError,
 };
 use thiserror::Error;
 use tokio::sync::{mpsc, oneshot};
@@ -49,6 +52,12 @@ pub enum P2PError {
 
     #[error("Gossip topics subscription failed")]
     GossipTopicSubscriptionFailure,
+
+    #[error("Gossipsub publish failure: {0}")]
+    GossipsubPublishFailure(#[from] PublishError),
+
+    #[error("Invalid gossipsub topics: {0}")]
+    InvalidGossipTopic(&'static str),
 }
 
 #[derive(Error, Debug)]
