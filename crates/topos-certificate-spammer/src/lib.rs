@@ -191,6 +191,7 @@ pub async fn run(
 ) -> Result<(), Error> {
     // Is list of nodes is specified in the command line use them otherwise use
     // config file provided nodes
+    debug!("{:#?}", args);
     let target_nodes = if args.benchmark {
         if let (Some(target_hosts), Some(number)) = (args.target_hosts, args.number) {
             let uri = target_hosts
@@ -341,7 +342,6 @@ pub async fn run(
                     batch.push(new_cert);
                 }
 
-                // Dispatch certs in this batch
                 // Dispatch certs in this batch
                 for cert in batch {
                     // Randomly choose target tce node for every certificate from related source_subnet_id connection list
