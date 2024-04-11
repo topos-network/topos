@@ -189,6 +189,7 @@ pub async fn run(
     args: CertificateSpammerConfig,
     mut shutdown: mpsc::Receiver<oneshot::Sender<()>>,
 ) -> Result<(), Error> {
+    debug!("{:#?}", args);
     // Is list of nodes is specified in the command line use them otherwise use
     // config file provided nodes
     let target_nodes = if args.benchmark {
