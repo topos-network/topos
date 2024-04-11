@@ -43,6 +43,8 @@ pub(crate) async fn handle_command(
                 env!("TOPOS_VERSION"),
             )?;
 
+            info!("Verify version of topos_certificate_spammer: 111");
+
             let (shutdown_sender, shutdown_receiver) = mpsc::channel::<oneshot::Sender<()>>(1);
             let mut runtime = spawn(topos_certificate_spammer::run(config, shutdown_receiver));
 
