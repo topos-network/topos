@@ -22,7 +22,7 @@ Options:
       --cert-per-batch <CERT_PER_BATCH>
           Certificates generated in one batch. Batch is generated every `batch-interval` milliseconds [env: TOPOS_NETWORK_SPAMMER_CERT_PER_BATCH=] [default: 1]
       --nb-subnets <NB_SUBNETS>
-          Number of subnets to use for certificate generation. For every certificate subnet id will be picked randomly [env: TOPOS_NETWORK_SPAMMER_NUMBER_OF_SUBNETS=] [default: 1]
+          Number of subnets to use for certificate generation. For every certificate subnet id will be picked randomly [env: TOPOS_NETWORK_SPAMMER_NUMBER_OF_SUBNETS=] [default: 100]
       --nb-batches <NB_BATCHES>
           Number of batches to generate before finishing execution. If not specified, batches will be generated indefinitely [env: TOPOS_NETWORK_SPAMMER_NUMBER_OF_BATCHES=]
       --batch-interval <BATCH_INTERVAL>
