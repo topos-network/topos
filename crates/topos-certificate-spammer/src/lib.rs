@@ -345,18 +345,18 @@ pub async fn run(
                 // Dispatch certs in this batch
                 for cert in batch {
                     // Randomly choose target tce node for every certificate from related source_subnet_id connection list
-                    // let target_node_connection = &target_node_connections[&cert.source_subnet_id]
-                    //     [rand::random::<usize>() % target_nodes.len()];
-                    for target_node_connection in &target_node_connections[&cert.source_subnet_id] {
-                        info!(
-                            "Dispatching {cert:?} to target node {}",
-                            target_node_connection.address
-                        );
-                        dispatch(cert.clone(), target_node_connection)
-                            .instrument(Span::current())
-                            .with_current_context()
-                            .await;
-                    }
+                    let target_node_connection = &target_node_connections[&cert.source_subnet_id]
+                        [rand::random::<usize>() % target_nodes.len()];
+                    // for target_node_connection in &target_node_connections[&cert.source_subnet_id] {
+                    //     info!(
+                    //         "Dispatching {cert:?} to target node {}",
+                    //         target_node_connection.address
+                    //     );
+                    dispatch(cert.clone(), target_node_connection)
+                        .instrument(Span::current())
+                        .with_current_context()
+                        .await;
+                    // }
                 }
             }
             .instrument(span)

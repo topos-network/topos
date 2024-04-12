@@ -37,7 +37,7 @@ pub struct Spam {
     #[arg(
         long,
         env = "TOPOS_NETWORK_SPAMMER_NUMBER_OF_SUBNETS",
-        default_value = "10"
+        default_value = "100"
     )]
     pub nb_subnets: u8,
     /// Number of batches to generate before finishing execution.
