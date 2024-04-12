@@ -228,7 +228,7 @@ pub async fn run(
     };
 
     // Generate keys for all required subnets (`nb_subnets`)
-    let mut source_subnets = generate_source_subnets(args.local_key_seed, args.nb_subnets)?;
+    let mut source_subnets = generate_source_subnets(args.local_key_seed, 100)?;
     info!("Generated source subnets: {source_subnets:#?}");
 
     // Target subnets (randomly assigned to every generated certificate)
@@ -310,8 +310,7 @@ pub async fn run(
                 let mut batch: Vec<Certificate> = Vec::new(); // Certificates for this batch
                 for b in 0..args.cert_per_batch {
                     // Randomize source subnet id
-                    let source_subnet =
-                        &mut source_subnets[rand::random::<usize>() % args.nb_subnets as usize];
+                    let source_subnet = &mut source_subnets[rand::random::<usize>() % 100 as usize];
                     // Randomize number of target subnets if target subnet list cli argument is provided
                     let target_subnets: Vec<SubnetId> = if target_subnet_ids.is_empty() {
                         // Empty list of target subnets in certificate
