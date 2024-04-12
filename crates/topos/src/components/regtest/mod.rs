@@ -19,6 +19,7 @@ pub(crate) async fn handle_command(
 ) -> Result<(), Box<dyn std::error::Error>> {
     match subcommands {
         Some(RegtestCommands::Spam(cmd)) => {
+            info!("{:#?}", cmd);
             let config = CertificateSpammerConfig {
                 target_nodes: cmd.target_nodes,
                 target_nodes_path: cmd.target_nodes_path,
