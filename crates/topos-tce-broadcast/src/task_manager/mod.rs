@@ -106,6 +106,7 @@ impl TaskManager {
         }
     }
 
+    /// Cancel tasks for certificates that have been synced in the background and are considered delivered.
     async fn cancel_tasks_for_synced_certificates(&mut self) {
         let open_cert_ids = self.tasks.keys().cloned().collect::<Vec<_>>();
         let delivered_certificates = self.validator_store.get_certificates(&open_cert_ids);
