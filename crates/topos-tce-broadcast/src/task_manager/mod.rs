@@ -120,7 +120,7 @@ impl TaskManager {
                                 self.tasks.remove(&certificate.certificate.id)
                             {
                                 task_context.shutdown_sender.send(()).await.unwrap();
-                                info!("Task for certificate {} has been cancelled' certificate already delivered", certificate.certificate.id);
+                                info!("Task for certificate {} has been cancelled; certificate already delivered", certificate.certificate.id);
                             }
                         }
                     }
