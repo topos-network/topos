@@ -152,7 +152,6 @@ pub async fn run(
     debug!("P2P layer bootstrapped");
 
     debug!("Creating the Synchronizer");
-
     let (synchronizer_runtime, synchronizer_stream) =
         topos_tce_synchronizer::Synchronizer::builder()
             .with_config(config.synchronization.clone())

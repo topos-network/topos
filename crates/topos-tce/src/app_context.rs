@@ -100,6 +100,7 @@ impl AppContext {
     ) {
         loop {
             tokio::select! {
+                biased;
 
                 Some(delivery) = broadcast_stream.next() => {
                     let certificate_id = delivery.0.certificate.id;
