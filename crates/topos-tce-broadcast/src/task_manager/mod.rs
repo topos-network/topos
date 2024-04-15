@@ -106,16 +106,48 @@ impl TaskManager {
         }
     }
 
+    async fn cancel_tasks_for_synced_certificates(&mut self) {
+        let open_cert_ids = self.tasks.keys().cloned().collect::<Vec<_>>();
+        let delivered_certificates = self.validator_store.get_certificates(&open_cert_ids);
+
+        match delivered_certificates {
+            Ok(delivered_certificates) => {
+                for certificate in delivered_certificates {
+                    if let Some(certificate) = certificate {
+                        if self.tasks.contains_key(&certificate.certificate.id) {
+                            if let Some(task_context) =
+                                self.tasks.remove(&certificate.certificate.id)
+                            {
+                                task_context.shutdown_sender.send(()).await.unwrap();
+                                info!("Task for certificate {} has been cancelled' certificate already delivered", certificate.certificate.id);
+                            }
+                        }
+                    }
+                }
+            }
+            Err(error) => {
+                error!("Failed to fetch the delivered certificates: {:?}", error);
+            }
+        }
+    }
+
     pub async fn run(mut self, shutdown_receiver: CancellationToken) {
-        let mut interval = tokio::time::interval(Duration::from_millis(100));
+        let mut pending_interval = tokio::time::interval(Duration::from_millis(50));
+        let mut abort_interval = tokio::time::interval(Duration::from_millis(800));
 
         loop {
             tokio::select! {
                 biased;
 
-                _ = interval.tick() => {
+                _ = pending_interval.tick() => {
                     self.next_pending_certificate();
+
                 }
+
+                _ = abort_interval.tick() => {
+                    self.cancel_tasks_for_synced_certificates().await;
+                }
+
                 Some(msg) = self.message_receiver.recv() => {
                     match msg {
                         DoubleEchoCommand::Echo { certificate_id, .. } | DoubleEchoCommand::Ready { certificate_id, .. } => {
