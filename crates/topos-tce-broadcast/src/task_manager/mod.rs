@@ -107,34 +107,34 @@ impl TaskManager {
     }
 
     /// Cancel tasks for certificates that have been synced in the background and are considered delivered.
-    async fn cancel_tasks_for_synced_certificates(&mut self) {
-        let open_cert_ids = self.tasks.keys().cloned().collect::<Vec<_>>();
-        let delivered_certificates = self.validator_store.get_certificates(&open_cert_ids);
-
-        match delivered_certificates {
-            Ok(delivered_certificates) => {
-                for certificate in delivered_certificates {
-                    if let Some(certificate) = certificate {
-                        if self.tasks.contains_key(&certificate.certificate.id) {
-                            if let Some(task_context) =
-                                self.tasks.remove(&certificate.certificate.id)
-                            {
-                                task_context.shutdown_sender.send(()).await.unwrap();
-                                info!("Task for certificate {} has been cancelled; certificate already delivered", certificate.certificate.id);
-                            }
-                        }
-                    }
-                }
-            }
-            Err(error) => {
-                error!("Failed to fetch the delivered certificates: {:?}", error);
-            }
-        }
-    }
+    // async fn cancel_tasks_for_synced_certificates(&mut self) {
+    //     let open_cert_ids = self.tasks.keys().cloned().collect::<Vec<_>>();
+    //     let delivered_certificates = self.validator_store.get_certificates(&open_cert_ids);
+    //
+    //     match delivered_certificates {
+    //         Ok(delivered_certificates) => {
+    //             for certificate in delivered_certificates {
+    //                 if let Some(certificate) = certificate {
+    //                     if self.tasks.contains_key(&certificate.certificate.id) {
+    //                         if let Some(task_context) =
+    //                             self.tasks.remove(&certificate.certificate.id)
+    //                         {
+    //                             task_context.shutdown_sender.send(()).await.unwrap();
+    //                             info!("Task for certificate {} has been cancelled; certificate already delivered", certificate.certificate.id);
+    //                         }
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //         Err(error) => {
+    //             error!("Failed to fetch the delivered certificates: {:?}", error);
+    //         }
+    //     }
+    // }
 
     pub async fn run(mut self, shutdown_receiver: CancellationToken) {
-        let mut pending_interval = tokio::time::interval(Duration::from_millis(50));
-        let mut abort_interval = tokio::time::interval(Duration::from_millis(800));
+        let mut pending_interval = tokio::time::interval(Duration::from_millis(10));
+        // let mut abort_interval = tokio::time::interval(Duration::from_millis(800));
 
         loop {
             tokio::select! {
@@ -145,9 +145,9 @@ impl TaskManager {
 
                 }
 
-                _ = abort_interval.tick() => {
-                    self.cancel_tasks_for_synced_certificates().await;
-                }
+                // _ = abort_interval.tick() => {
+                //     self.cancel_tasks_for_synced_certificates().await;
+                // }
 
                 Some(msg) = self.message_receiver.recv() => {
                     match msg {
