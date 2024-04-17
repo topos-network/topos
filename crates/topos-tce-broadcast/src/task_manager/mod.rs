@@ -2,12 +2,12 @@ use crate::event::ProtocolEvents;
 use futures::stream::FuturesUnordered;
 use futures::Future;
 use futures::StreamExt;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::future::IntoFuture;
 use std::pin::Pin;
 use std::sync::Arc;
 use std::time::Duration;
-use tokio::sync::broadcast;
+use tokio::sync::{broadcast, Mutex};
 use tokio::{spawn, sync::mpsc};
 use tokio_util::sync::CancellationToken;
 use topos_config::tce::broadcast::ReliableBroadcastParams;
@@ -52,6 +52,7 @@ pub struct TaskManager {
     pub thresholds: ReliableBroadcastParams,
     pub validator_id: ValidatorId,
     pub validator_store: Arc<ValidatorStore>,
+    pub delivered_certficiates: Arc<Mutex<HashSet<CertificateId>>>,
     pub broadcast_sender: broadcast::Sender<CertificateDeliveredWithPositions>,
     pub latest_pending_id: PendingCertificateId,
 }
@@ -66,6 +67,7 @@ impl TaskManager {
         thresholds: ReliableBroadcastParams,
         message_signer: Arc<MessageSigner>,
         validator_store: Arc<ValidatorStore>,
+        delivered_certficiates: Arc<Mutex<HashSet<CertificateId>>>,
         broadcast_sender: broadcast::Sender<CertificateDeliveredWithPositions>,
     ) -> Self {
         Self {
@@ -79,6 +81,7 @@ impl TaskManager {
             message_signer,
             thresholds,
             validator_store,
+            delivered_certficiates,
             broadcast_sender,
             latest_pending_id: 0,
         }
@@ -174,8 +177,8 @@ impl TaskManager {
                     if let TaskStatus::Success = status {
                         trace!("Task for certificate {} finished successfully", certificate_id);
                         self.tasks.remove(&certificate_id);
+                        self.delivered_certficiates.lock().await.insert(certificate_id);
                         DOUBLE_ECHO_ACTIVE_TASKS_COUNT.dec();
-
                     } else {
                         error!("Task for certificate {} finished unsuccessfully", certificate_id);
                     }

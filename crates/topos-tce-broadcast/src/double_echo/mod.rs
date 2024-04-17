@@ -17,7 +17,7 @@ use crate::event::ProtocolEvents;
 use crate::{DoubleEchoCommand, SubscriptionsView};
 use std::collections::HashSet;
 use std::sync::Arc;
-use tokio::sync::{broadcast, mpsc, oneshot};
+use tokio::sync::{broadcast, mpsc, oneshot, Mutex};
 use tokio_util::sync::CancellationToken;
 use topos_config::tce::broadcast::ReliableBroadcastParams;
 use topos_core::{types::ValidatorId, uci::CertificateId};
@@ -49,6 +49,7 @@ pub struct DoubleEcho {
     /// List of approved validators through smart contract and/or genesis
     pub validators: HashSet<ValidatorId>,
     pub validator_store: Arc<ValidatorStore>,
+    pub delivered_certificates: Arc<Mutex<HashSet<CertificateId>>>,
     pub broadcast_sender: broadcast::Sender<CertificateDeliveredWithPositions>,
 
     pub task_manager_cancellation: CancellationToken,
@@ -85,6 +86,7 @@ impl DoubleEcho {
             },
             shutdown,
             validator_store,
+            delivered_certificates: Arc::new(Mutex::new(HashSet::new())),
             broadcast_sender,
             task_manager_cancellation: CancellationToken::new(),
         }
@@ -102,6 +104,7 @@ impl DoubleEcho {
             self.params.clone(),
             self.message_signer.clone(),
             self.validator_store.clone(),
+            self.delivered_certificates.clone(),
             self.broadcast_sender.clone(),
         );
 
@@ -159,6 +162,10 @@ impl DoubleEcho {
                                         continue;
                                     }
 
+                                    if let Some(cert_id) = self.delivered_certificates.lock().await.get(&certificate_id) {
+                                        debug!("ECHO message received for already delivered certificate: {}", cert_id);
+                                        continue;
+                                    }
                                     self.handle_echo(certificate_id, validator_id, signature).await
                                 },
                                 DoubleEchoCommand::Ready { certificate_id, validator_id, signature } => {
@@ -176,7 +183,10 @@ impl DoubleEcho {
                                         debug!("READY message signature cannot be verified from: {}", e);
                                         continue;
                                     }
-
+                                    if let Some(cert_id) = self.delivered_certificates.lock().await.get(&certificate_id) {
+                                        debug!("READY message received for already delivered certificate: {}", cert_id);
+                                        continue;
+                                    }
                                     self.handle_ready(certificate_id, validator_id, signature).await
                                 },
                             }
