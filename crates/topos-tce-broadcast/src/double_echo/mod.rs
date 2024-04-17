@@ -27,6 +27,14 @@ use topos_tce_storage::types::CertificateDeliveredWithPositions;
 use topos_tce_storage::validator::ValidatorStore;
 use tracing::{debug, error, info, warn};
 
+lazy_static::lazy_static! {
+    pub static ref TOPOS_CHECK_MESSAGE_SIGNATURE: bool =
+        std::env::var("TOPOS_CHECK_MESSAGE_SIGNATURE")
+        .map(|v| v.to_lowercase() == "true")
+        .ok()
+        .unwrap_or(true);
+}
+
 pub mod broadcast_state;
 
 pub struct DoubleEcho {
@@ -154,9 +162,11 @@ impl DoubleEcho {
                                     payload.extend_from_slice(certificate_id.as_array());
                                     payload.extend_from_slice(validator_id.as_bytes());
 
-                                    if let Err(e) = self.message_signer.verify_signature(signature, &payload, validator_id.address()) {
-                                        debug!("ECHO message signature cannot be verified from: {}", e);
-                                        continue;
+                                    if *TOPOS_CHECK_MESSAGE_SIGNATURE {
+                                        if let Err(e) = self.message_signer.verify_signature(signature, &payload, validator_id.address()) {
+                                            debug!("ECHO message signature cannot be verified from: {}", e);
+                                            continue;
+                                        }
                                     }
 
                                     self.handle_echo(certificate_id, validator_id, signature).await
@@ -172,9 +182,11 @@ impl DoubleEcho {
                                     payload.extend_from_slice(certificate_id.as_array());
                                     payload.extend_from_slice(validator_id.as_bytes());
 
-                                    if let Err(e) = self.message_signer.verify_signature(signature, &payload, validator_id.address()) {
-                                        debug!("READY message signature cannot be verified from: {}", e);
-                                        continue;
+                                    if *TOPOS_CHECK_MESSAGE_SIGNATURE {
+                                        if let Err(e) = self.message_signer.verify_signature(signature, &payload, validator_id.address()) {
+                                            debug!("READY message signature cannot be verified from: {}", e);
+                                            continue;
+                                        }
                                     }
 
                                     self.handle_ready(certificate_id, validator_id, signature).await
