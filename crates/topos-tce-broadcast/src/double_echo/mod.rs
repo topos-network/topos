@@ -233,26 +233,14 @@ impl DoubleEcho {
         validator_id: ValidatorId,
         signature: Signature,
     ) {
-        match self.validator_store.get_certificate(&certificate_id) {
-            Err(storage_error) => error!(
-                "Unable to get the Certificate {} due to {:?}",
-                &certificate_id, storage_error
-            ),
-            Ok(Some(_)) => debug!(
-                "Certificate {} already delivered, ignoring echo",
-                &certificate_id
-            ),
-            Ok(None) => {
-                let _ = self
-                    .task_manager_message_sender
-                    .send(DoubleEchoCommand::Echo {
-                        validator_id,
-                        certificate_id,
-                        signature,
-                    })
-                    .await;
-            }
-        }
+        let _ = self
+            .task_manager_message_sender
+            .send(DoubleEchoCommand::Echo {
+                validator_id,
+                certificate_id,
+                signature,
+            })
+            .await;
     }
 
     pub async fn handle_ready(
@@ -261,25 +249,13 @@ impl DoubleEcho {
         validator_id: ValidatorId,
         signature: Signature,
     ) {
-        match self.validator_store.get_certificate(&certificate_id) {
-            Err(storage_error) => error!(
-                "Unable to get the Certificate {} due to {:?}",
-                &certificate_id, storage_error
-            ),
-            Ok(Some(_)) => debug!(
-                "Certificate {} already delivered, ignoring echo",
-                &certificate_id
-            ),
-            Ok(None) => {
-                let _ = self
-                    .task_manager_message_sender
-                    .send(DoubleEchoCommand::Ready {
-                        validator_id,
-                        certificate_id,
-                        signature,
-                    })
-                    .await;
-            }
-        }
+        let _ = self
+            .task_manager_message_sender
+            .send(DoubleEchoCommand::Ready {
+                validator_id,
+                certificate_id,
+                signature,
+            })
+            .await;
     }
 }
