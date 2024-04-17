@@ -22,10 +22,9 @@ use tokio_util::sync::CancellationToken;
 use topos_config::tce::broadcast::ReliableBroadcastParams;
 use topos_core::{types::ValidatorId, uci::CertificateId};
 use topos_crypto::messages::{MessageSigner, Signature};
-use topos_tce_storage::store::ReadStore;
 use topos_tce_storage::types::CertificateDeliveredWithPositions;
 use topos_tce_storage::validator::ValidatorStore;
-use tracing::{debug, error, info, warn};
+use tracing::{debug, info, warn};
 
 lazy_static::lazy_static! {
     pub static ref TOPOS_CHECK_MESSAGE_SIGNATURE: bool =
