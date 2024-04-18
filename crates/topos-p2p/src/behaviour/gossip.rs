@@ -25,7 +25,7 @@ use crate::{constants, event::ComposedEvent, TOPOS_ECHO, TOPOS_GOSSIP, TOPOS_REA
 
 use super::HealthStatus;
 
-const MAX_BATCH_SIZE: usize = 1024;
+const MAX_BATCH_SIZE: usize = 2048;
 
 pub struct Behaviour {
     batch_size: usize,
@@ -76,7 +76,7 @@ impl Behaviour {
             .unwrap_or(Ok(MAX_BATCH_SIZE))
             .unwrap();
         let gossipsub = gossipsub::ConfigBuilder::default()
-            .max_transmit_size(2 * 2048 * 2048)
+            .max_transmit_size(5 * 2048 * 2048)
             .validation_mode(gossipsub::ValidationMode::Strict)
             .message_id_fn(|msg_id| {
                 // Content based id

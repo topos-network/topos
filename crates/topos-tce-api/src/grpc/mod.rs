@@ -29,7 +29,7 @@ pub(crate) mod console;
 #[cfg(test)]
 mod tests;
 
-const DEFAULT_CHANNEL_STREAM_CAPACITY: usize = 1024;
+const DEFAULT_CHANNEL_STREAM_CAPACITY: usize = 5120;
 
 pub(crate) mod builder;
 pub(crate) mod messaging;
