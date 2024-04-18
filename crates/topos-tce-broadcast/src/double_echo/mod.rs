@@ -55,7 +55,7 @@ pub struct DoubleEcho {
 }
 
 impl DoubleEcho {
-    pub const MAX_BUFFER_SIZE: usize = 2048;
+    pub const MAX_BUFFER_SIZE: usize = 6144;
 
     #[allow(clippy::too_many_arguments)]
     pub fn new(

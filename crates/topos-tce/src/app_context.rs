@@ -69,7 +69,7 @@ impl AppContext {
         validator_store: Arc<ValidatorStore>,
         api_context: RuntimeContext,
     ) -> (Self, mpsc::Receiver<Events>) {
-        let (events, receiver) = mpsc::channel(100);
+        let (events, receiver) = mpsc::channel(2048);
         (
             Self {
                 is_validator,
