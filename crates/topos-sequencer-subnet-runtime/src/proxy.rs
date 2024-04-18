@@ -68,7 +68,8 @@ impl SubnetRuntimeProxy {
              address: {}, ",
             &config.http_endpoint, &config.ws_endpoint, &config.subnet_contract_address
         );
-        let (command_sender, mut command_rcv) = mpsc::channel::<SubnetRuntimeProxyCommand>(5120);
+        let (command_sender, mut command_rcv) =
+            mpsc::channel::<SubnetRuntimeProxyCommand>(1024 * 20);
         let ws_runtime_endpoint = config.ws_endpoint.clone();
         let http_runtime_endpoint = config.http_endpoint.clone();
         let subnet_contract_address = Arc::new(config.subnet_contract_address.clone());

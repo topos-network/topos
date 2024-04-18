@@ -29,7 +29,7 @@ pub(crate) mod console;
 #[cfg(test)]
 mod tests;
 
-const DEFAULT_CHANNEL_STREAM_CAPACITY: usize = 5120;
+const DEFAULT_CHANNEL_STREAM_CAPACITY: usize = 1024 * 20;
 
 pub(crate) mod builder;
 pub(crate) mod messaging;
@@ -272,7 +272,7 @@ impl ApiService for TceGrpcService {
             .map(move |message| Self::parse_stream(message, stream_id))
             .boxed();
 
-        let (command_sender, command_receiver) = mpsc::channel(6144);
+        let (command_sender, command_receiver) = mpsc::channel(1024 * 20);
 
         let (outbound_stream, rx) = mpsc::channel::<Result<(Option<Uuid>, OutboundMessage), Status>>(
             DEFAULT_CHANNEL_STREAM_CAPACITY,

@@ -23,7 +23,7 @@ impl Default for SynchronizationConfig {
 }
 
 impl SynchronizationConfig {
-    pub const INTERVAL_SECONDS: u64 = 60;
+    pub const INTERVAL_SECONDS: u64 = 60 * 3;
     pub const LIMIT_PER_SUBNET: usize = 100;
 
     const fn default_interval_seconds() -> u64 {

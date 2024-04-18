@@ -107,7 +107,7 @@ impl TaskManager {
     }
 
     pub async fn run(mut self, shutdown_receiver: CancellationToken) {
-        let mut interval = tokio::time::interval(Duration::from_millis(5));
+        let mut interval = tokio::time::interval(Duration::from_millis(3));
 
         loop {
             tokio::select! {
