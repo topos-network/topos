@@ -6,19 +6,19 @@ lazy_static! {
         std::env::var("TOPOS_DOUBLE_ECHO_COMMAND_CHANNEL_SIZE")
             .ok()
             .and_then(|s| s.parse().ok())
-            .unwrap_or(2048);
+            .unwrap_or(1024 * 20);
     /// Size of the channel between double echo and the task manager
     pub static ref BROADCAST_TASK_MANAGER_CHANNEL_SIZE: usize =
         std::env::var("TOPOS_BROADCAST_TASK_MANAGER_CHANNEL_SIZE")
             .ok()
             .and_then(|s| s.parse().ok())
-            .unwrap_or(20_480);
+            .unwrap_or(1024 * 20);
     /// Size of the channel to send protocol events from the double echo
     pub static ref PROTOCOL_CHANNEL_SIZE: usize =
         std::env::var("TOPOS_PROTOCOL_CHANNEL_SIZE")
             .ok()
             .and_then(|s| s.parse().ok())
-            .unwrap_or(2048);
+            .unwrap_or(1024 * 20);
     /// Capacity alert threshold for the double echo command channel
     pub static ref COMMAND_CHANNEL_CAPACITY: usize = COMMAND_CHANNEL_SIZE
         .checked_mul(10)

@@ -19,11 +19,11 @@ pub struct TceProxyWorker {
 }
 
 impl TceProxyWorker {
-    /// Construct a new [`TceProxyWorker`] with a 128 items deep channel to send commands to and receive events from a TCE node on the given subnet.
+    /// Construct a new [`TceProxyWorker`] with a 1024 * 20 items deep channel to send commands to and receive events from a TCE node on the given subnet.
     /// The worker holds a [`crate::client::TceClient`]
     pub async fn new(config: TceProxyConfig) -> Result<(Self, Option<(Certificate, u64)>), Error> {
-        let (command_sender, mut command_rcv) = mpsc::channel::<TceProxyCommand>(128);
-        let (evt_sender, evt_rcv) = mpsc::channel::<TceProxyEvent>(128);
+        let (command_sender, mut command_rcv) = mpsc::channel::<TceProxyCommand>(1024 * 20);
+        let (evt_sender, evt_rcv) = mpsc::channel::<TceProxyEvent>(1024 * 20);
         let (tce_client_shutdown_channel, shutdown_receiver) =
             mpsc::channel::<oneshot::Sender<()>>(1);
 
