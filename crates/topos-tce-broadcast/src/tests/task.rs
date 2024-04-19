@@ -1,12 +1,10 @@
 use std::{future::IntoFuture, sync::Arc, time::Duration};
 
 use rstest::rstest;
-use tokio::{
-    spawn,
-    sync::{broadcast, mpsc},
-};
+use tokio::{spawn, sync::broadcast};
 use topos_core::uci::Certificate;
 use topos_crypto::{messages::MessageSigner, validator_id::ValidatorId};
+use topos_metrics::DOUBLE_ECHO_EVENT_CHANNEL;
 use topos_tce_storage::validator::ValidatorStore;
 use topos_test_sdk::{
     certificates::create_certificate_chain,
@@ -40,7 +38,8 @@ async fn start_with_ungossiped_cert(
         ready_threshold: 1,
         delivery_threshold: 1,
     };
-    let (event_sender, mut event_receiver) = mpsc::channel(2);
+    let (event_sender, mut event_receiver) =
+        topos_metrics::channels::mpsc::channel(2, &DOUBLE_ECHO_EVENT_CHANNEL);
     let (broadcast_sender, _) = broadcast::channel(1);
     let need_gossip = true;
     let subscriptions = SubscriptionsView::default();

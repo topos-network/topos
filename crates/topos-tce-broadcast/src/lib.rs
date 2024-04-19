@@ -39,8 +39,15 @@ use std::collections::HashSet;
 use std::sync::Arc;
 use thiserror::Error;
 use tokio::spawn;
-use tokio::sync::mpsc::Sender;
-use tokio::sync::{broadcast, mpsc, oneshot};
+use topos_metrics::{
+    DOUBLE_CLIENT_TO_DOUBLE_ECHO_CHANNEL, DOUBLE_ECHO_EVENT_CHANNEL,
+    DOUBLE_ECHO_TO_TASK_MANAGER_CHANNEL,
+};
+// use tokio::sync::mpsc::Sender;
+use topos_metrics::channels::mpsc;
+use topos_metrics::channels::mpsc::Sender;
+
+use tokio::sync::{broadcast, oneshot};
 use tokio_stream::wrappers::ReceiverStream;
 use topos_config::tce::broadcast::ReliableBroadcastParams;
 use topos_core::types::ValidatorId;
@@ -110,7 +117,7 @@ pub enum DoubleEchoCommand {
 #[derive(Clone, Debug)]
 pub struct ReliableBroadcastClient {
     command_sender: Sender<DoubleEchoCommand>,
-    pub(crate) double_echo_shutdown_channel: Sender<oneshot::Sender<()>>,
+    pub(crate) double_echo_shutdown_channel: tokio::sync::mpsc::Sender<oneshot::Sender<()>>,
 }
 
 impl ReliableBroadcastClient {
@@ -123,13 +130,19 @@ impl ReliableBroadcastClient {
         validator_store: Arc<ValidatorStore>,
         broadcast_sender: broadcast::Sender<CertificateDeliveredWithPositions>,
     ) -> (Self, impl Stream<Item = ProtocolEvents>) {
-        let (event_sender, event_receiver) = mpsc::channel(*constant::PROTOCOL_CHANNEL_SIZE);
-        let (command_sender, command_receiver) = mpsc::channel(*constant::COMMAND_CHANNEL_SIZE);
+        let (event_sender, event_receiver) =
+            mpsc::channel(*constant::PROTOCOL_CHANNEL_SIZE, &DOUBLE_ECHO_EVENT_CHANNEL);
+        let (command_sender, command_receiver) = mpsc::channel(
+            *constant::COMMAND_CHANNEL_SIZE,
+            &DOUBLE_CLIENT_TO_DOUBLE_ECHO_CHANNEL,
+        );
         let (double_echo_shutdown_channel, double_echo_shutdown_receiver) =
-            mpsc::channel::<oneshot::Sender<()>>(1);
+            tokio::sync::mpsc::channel::<oneshot::Sender<()>>(1);
 
-        let (task_manager_message_sender, task_manager_message_receiver) =
-            mpsc::channel(*constant::BROADCAST_TASK_MANAGER_CHANNEL_SIZE);
+        let (task_manager_message_sender, task_manager_message_receiver) = mpsc::channel(
+            *constant::BROADCAST_TASK_MANAGER_CHANNEL_SIZE,
+            &DOUBLE_ECHO_TO_TASK_MANAGER_CHANNEL,
+        );
 
         let double_echo = DoubleEcho::new(
             config.tce_params,
@@ -155,7 +168,7 @@ impl ReliableBroadcastClient {
                 command_sender,
                 double_echo_shutdown_channel,
             },
-            ReceiverStream::new(event_receiver),
+            ReceiverStream::new(event_receiver.inner()),
         )
     }
 

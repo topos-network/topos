@@ -7943,8 +7943,10 @@ dependencies = [
 name = "topos-metrics"
 version = "0.1.0"
 dependencies = [
+ "futures",
  "lazy_static",
  "prometheus",
+ "tokio",
 ]
 
 [[package]]

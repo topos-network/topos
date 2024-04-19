@@ -5,12 +5,15 @@ use std::collections::HashSet;
 use std::str::FromStr;
 use std::sync::Arc;
 use std::time::Duration;
-use tokio::sync::mpsc::Receiver;
 use tokio::sync::{broadcast, mpsc, oneshot};
 use topos_config::tce::broadcast::ReliableBroadcastParams;
 use topos_core::uci::Certificate;
 use topos_crypto::messages::MessageSigner;
 use topos_crypto::validator_id::ValidatorId;
+use topos_metrics::{
+    DOUBLE_CLIENT_TO_DOUBLE_ECHO_CHANNEL, DOUBLE_ECHO_EVENT_CHANNEL,
+    DOUBLE_ECHO_TO_TASK_MANAGER_CHANNEL,
+};
 use topos_tce_storage::types::CertificateDeliveredWithPositions;
 use topos_tce_storage::validator::ValidatorStore;
 use topos_test_sdk::constants::*;
@@ -53,18 +56,21 @@ struct TceParams {
 }
 
 struct Context {
-    event_receiver: Receiver<ProtocolEvents>,
+    event_receiver: topos_metrics::channels::mpsc::Receiver<ProtocolEvents>,
     broadcast_receiver: broadcast::Receiver<CertificateDeliveredWithPositions>,
     validator_store: Arc<ValidatorStore>,
 }
 
 async fn create_context(params: TceParams) -> (DoubleEcho, Context) {
     let validator_store = create_validator_store::default().await;
-    let (_cmd_sender, cmd_receiver) = mpsc::channel(CHANNEL_SIZE);
-    let (event_sender, event_receiver) = mpsc::channel(CHANNEL_SIZE);
+    let (_cmd_sender, cmd_receiver) =
+        topos_metrics::channels::mpsc::channel(CHANNEL_SIZE, &DOUBLE_CLIENT_TO_DOUBLE_ECHO_CHANNEL);
+    let (event_sender, event_receiver) =
+        topos_metrics::channels::mpsc::channel(CHANNEL_SIZE, &DOUBLE_ECHO_EVENT_CHANNEL);
     let (_double_echo_shutdown_sender, double_echo_shutdown_receiver) =
         mpsc::channel::<oneshot::Sender<()>>(1);
-    let (task_manager_message_sender, task_manager_message_receiver) = mpsc::channel(CHANNEL_SIZE);
+    let (task_manager_message_sender, task_manager_message_receiver) =
+        topos_metrics::channels::mpsc::channel(CHANNEL_SIZE, &DOUBLE_ECHO_TO_TASK_MANAGER_CHANNEL);
 
     let message_signer = Arc::new(MessageSigner::from_str(PRIVATE_KEY).unwrap());
 

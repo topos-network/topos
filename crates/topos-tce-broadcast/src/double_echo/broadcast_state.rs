@@ -2,7 +2,6 @@ use crate::event::ProtocolEvents;
 use crate::sampler::SubscriptionsView;
 use std::sync::Arc;
 use std::{collections::HashSet, time};
-use tokio::sync::mpsc;
 use topos_core::{
     types::{
         stream::{CertificateSourceStreamPosition, Position},
@@ -11,6 +10,7 @@ use topos_core::{
     uci::Certificate,
 };
 use topos_crypto::messages::MessageSigner;
+use topos_metrics::channels::mpsc;
 use topos_metrics::DOUBLE_ECHO_BROADCAST_FINISHED_TOTAL;
 use tracing::{debug, error, info, trace};
 mod status;

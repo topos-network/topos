@@ -1,13 +1,10 @@
 use std::sync::Arc;
 
 use rstest::rstest;
-use tokio::{
-    spawn,
-    sync::{broadcast, mpsc},
-};
+use tokio::{spawn, sync::broadcast};
 use tokio_util::sync::CancellationToken;
 use topos_crypto::{messages::MessageSigner, validator_id::ValidatorId};
-use topos_metrics::DOUBLE_ECHO_ACTIVE_TASKS_COUNT;
+use topos_metrics::{DOUBLE_ECHO_ACTIVE_TASKS_COUNT, DOUBLE_ECHO_TO_TASK_MANAGER_CHANNEL};
 use topos_tce_storage::validator::ValidatorStore;
 use topos_test_sdk::{
     certificates::create_certificate_chain,
@@ -26,8 +23,11 @@ async fn can_start(
     validator_store: Arc<ValidatorStore>,
     message_signer: Arc<MessageSigner>,
 ) {
-    let (message_sender, message_receiver) = mpsc::channel(1);
-    let (event_sender, _) = mpsc::channel(1);
+    let (message_sender, message_receiver) =
+        topos_metrics::channels::mpsc::channel(1, &DOUBLE_ECHO_TO_TASK_MANAGER_CHANNEL);
+    let (event_sender, _) =
+        topos_metrics::channels::mpsc::channel(1, &topos_metrics::DOUBLE_ECHO_EVENT_CHANNEL);
+
     let (broadcast_sender, _) = broadcast::channel(1);
     let shutdown = CancellationToken::new();
     let validator_id = ValidatorId::default();

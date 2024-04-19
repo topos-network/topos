@@ -5,6 +5,10 @@ use tokio::sync::{broadcast, mpsc, oneshot};
 use topos_config::tce::broadcast::ReliableBroadcastParams;
 use topos_core::types::ValidatorId;
 use topos_crypto::messages::MessageSigner;
+use topos_metrics::{
+    DOUBLE_CLIENT_TO_DOUBLE_ECHO_CHANNEL, DOUBLE_ECHO_EVENT_CHANNEL,
+    DOUBLE_ECHO_TO_TASK_MANAGER_CHANNEL,
+};
 use topos_tce_broadcast::double_echo::DoubleEcho;
 use topos_tce_storage::validator::ValidatorStore;
 use topos_test_sdk::certificates::create_certificate_chain;
@@ -19,12 +23,15 @@ struct TceParams {
 }
 
 pub async fn processing_double_echo(n: u64, validator_store: Arc<ValidatorStore>) {
-    let (_cmd_sender, cmd_receiver) = mpsc::channel(CHANNEL_SIZE);
-    let (event_sender, _event_receiver) = mpsc::channel(CHANNEL_SIZE);
+    let (_cmd_sender, cmd_receiver) =
+        topos_metrics::channels::mpsc::channel(CHANNEL_SIZE, &DOUBLE_CLIENT_TO_DOUBLE_ECHO_CHANNEL);
+    let (event_sender, _event_receiver) =
+        topos_metrics::channels::mpsc::channel(CHANNEL_SIZE, &DOUBLE_ECHO_EVENT_CHANNEL);
     let (broadcast_sender, mut broadcast_receiver) = broadcast::channel(CHANNEL_SIZE);
     let (_double_echo_shutdown_sender, double_echo_shutdown_receiver) =
         mpsc::channel::<oneshot::Sender<()>>(1);
-    let (task_manager_message_sender, task_manager_message_receiver) = mpsc::channel(CHANNEL_SIZE);
+    let (task_manager_message_sender, task_manager_message_receiver) =
+        topos_metrics::channels::mpsc::channel(CHANNEL_SIZE, &DOUBLE_ECHO_TO_TASK_MANAGER_CHANNEL);
 
     let params = TceParams {
         nb_peers: 10,

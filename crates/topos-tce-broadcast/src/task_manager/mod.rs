@@ -9,13 +9,14 @@ use std::num::NonZeroUsize;
 use std::pin::Pin;
 use std::sync::Arc;
 use std::time::Duration;
+use tokio::spawn;
 use tokio::sync::broadcast;
-use tokio::{spawn, sync::mpsc};
 use tokio_util::sync::CancellationToken;
 use topos_config::tce::broadcast::ReliableBroadcastParams;
 use topos_core::types::ValidatorId;
 use topos_core::uci::Certificate;
 use topos_core::uci::CertificateId;
+use topos_metrics::channels::mpsc;
 use topos_metrics::CERTIFICATE_PROCESSING_FROM_API_TOTAL;
 use topos_metrics::CERTIFICATE_PROCESSING_FROM_GOSSIP_TOTAL;
 use topos_metrics::CERTIFICATE_PROCESSING_TOTAL;
@@ -218,7 +219,7 @@ impl TaskManager {
     fn start_task(
         running_tasks: &RunningTasks,
         task: Task,
-        sink: mpsc::Sender<DoubleEchoCommand>,
+        sink: tokio::sync::mpsc::Sender<DoubleEchoCommand>,
         messages: Option<Vec<DoubleEchoCommand>>,
         need_gossip: bool,
     ) {

@@ -1,7 +1,7 @@
 use std::future::{Future, IntoFuture};
 use std::pin::Pin;
 use std::sync::Arc;
-use tokio::sync::{broadcast, mpsc};
+use tokio::sync::broadcast;
 
 use topos_core::types::stream::Position;
 use topos_core::uci::CertificateId;
@@ -16,16 +16,16 @@ use crate::{DoubleEchoCommand, TaskStatus};
 
 #[derive(Debug)]
 pub struct TaskContext {
-    pub sink: mpsc::Sender<DoubleEchoCommand>,
-    pub shutdown_sender: mpsc::Sender<()>,
+    pub sink: tokio::sync::mpsc::Sender<DoubleEchoCommand>,
+    pub shutdown_sender: tokio::sync::mpsc::Sender<()>,
 }
 
 pub struct Task {
     pub validator_store: Arc<ValidatorStore>,
-    pub message_receiver: mpsc::Receiver<DoubleEchoCommand>,
+    pub message_receiver: tokio::sync::mpsc::Receiver<DoubleEchoCommand>,
     pub certificate_id: CertificateId,
     pub broadcast_state: BroadcastState,
-    pub shutdown_receiver: mpsc::Receiver<()>,
+    pub shutdown_receiver: tokio::sync::mpsc::Receiver<()>,
     broadcast_sender: broadcast::Sender<CertificateDeliveredWithPositions>,
 }
 
@@ -36,8 +36,8 @@ impl Task {
         validator_store: Arc<ValidatorStore>,
         broadcast_sender: broadcast::Sender<CertificateDeliveredWithPositions>,
     ) -> (Task, TaskContext) {
-        let (message_sender, message_receiver) = mpsc::channel(10_024);
-        let (shutdown_sender, shutdown_receiver) = mpsc::channel(1);
+        let (message_sender, message_receiver) = tokio::sync::mpsc::channel(10_024);
+        let (shutdown_sender, shutdown_receiver) = tokio::sync::mpsc::channel(1);
 
         let task_context = TaskContext {
             sink: message_sender,

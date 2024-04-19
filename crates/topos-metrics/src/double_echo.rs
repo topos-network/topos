@@ -7,6 +7,26 @@ use lazy_static::lazy_static;
 use crate::TOPOS_METRIC_REGISTRY;
 
 lazy_static! {
+    pub static ref DOUBLE_ECHO_EVENT_CHANNEL: IntGauge = register_int_gauge_with_registry!(
+        "double_echo_event_channel",
+        "Gauge for the double echo event channel.",
+        TOPOS_METRIC_REGISTRY
+    )
+    .unwrap();
+    pub static ref DOUBLE_CLIENT_TO_DOUBLE_ECHO_CHANNEL: IntGauge =
+        register_int_gauge_with_registry!(
+            "double_client_to_double_echo_channel",
+            "Gauge for the double echo command channel between client and double echo.",
+            TOPOS_METRIC_REGISTRY
+        )
+        .unwrap();
+    pub static ref DOUBLE_ECHO_TO_TASK_MANAGER_CHANNEL: IntGauge =
+        register_int_gauge_with_registry!(
+            "double_echo_to_task_manager_channel",
+            "Gauge for the double echo command channel between double echo and task manager.",
+            TOPOS_METRIC_REGISTRY
+        )
+        .unwrap();
     pub static ref DOUBLE_ECHO_ACTIVE_TASKS_COUNT: IntGauge = register_int_gauge_with_registry!(
         "double_echo_active_tasks_count",
         "Number of active tasks in the double echo.",

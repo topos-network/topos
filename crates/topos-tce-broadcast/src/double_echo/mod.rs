@@ -17,11 +17,12 @@ use crate::event::ProtocolEvents;
 use crate::{DoubleEchoCommand, SubscriptionsView};
 use std::collections::HashSet;
 use std::sync::Arc;
-use tokio::sync::{broadcast, mpsc, oneshot};
+use tokio::sync::{broadcast, oneshot};
 use tokio_util::sync::CancellationToken;
 use topos_config::tce::broadcast::ReliableBroadcastParams;
 use topos_core::{types::ValidatorId, uci::CertificateId};
 use topos_crypto::messages::{MessageSigner, Signature};
+use topos_metrics::channels::mpsc;
 use topos_tce_storage::types::CertificateDeliveredWithPositions;
 use topos_tce_storage::validator::ValidatorStore;
 use tracing::{debug, info, warn};
@@ -42,7 +43,7 @@ pub struct DoubleEcho {
     /// Channel to send events
     event_sender: mpsc::Sender<ProtocolEvents>,
     /// Channel to receive shutdown signal
-    pub(crate) shutdown: mpsc::Receiver<oneshot::Sender<()>>,
+    pub(crate) shutdown: tokio::sync::mpsc::Receiver<oneshot::Sender<()>>,
     /// The threshold parameters for the double echo
     pub params: ReliableBroadcastParams,
     /// The connection to the TaskManager to forward DoubleEchoCommand messages
@@ -73,7 +74,7 @@ impl DoubleEcho {
         task_manager_message_sender: mpsc::Sender<DoubleEchoCommand>,
         command_receiver: mpsc::Receiver<DoubleEchoCommand>,
         event_sender: mpsc::Sender<ProtocolEvents>,
-        shutdown: mpsc::Receiver<oneshot::Sender<()>>,
+        shutdown: tokio::sync::mpsc::Receiver<oneshot::Sender<()>>,
         validator_store: Arc<ValidatorStore>,
         broadcast_sender: broadcast::Sender<CertificateDeliveredWithPositions>,
     ) -> Self {

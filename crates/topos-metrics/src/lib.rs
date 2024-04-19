@@ -7,6 +7,7 @@ use lazy_static::lazy_static;
 use std::collections::hash_map::HashMap;
 
 mod api;
+pub mod channels;
 mod double_echo;
 mod p2p;
 mod storage;
