@@ -31,7 +31,6 @@ async fn can_start(
     let (broadcast_sender, _) = broadcast::channel(1);
     let shutdown = CancellationToken::new();
     let validator_id = ValidatorId::default();
-    let delivered_certificates = Default::default();
     let thresholds = topos_config::tce::broadcast::ReliableBroadcastParams {
         echo_threshold: 1,
         ready_threshold: 1,
@@ -46,7 +45,6 @@ async fn can_start(
         thresholds,
         message_signer,
         validator_store,
-        delivered_certificates,
         broadcast_sender,
     );
 
