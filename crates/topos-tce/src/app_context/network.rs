@@ -1,5 +1,7 @@
+use futures::TryFutureExt;
 use prost::Message;
 use std::collections::hash_map;
+use tokio::sync::mpsc::error::TrySendError;
 use topos_tce_storage::errors::{InternalStorageError, StorageError};
 
 use tokio::spawn;
@@ -50,7 +52,7 @@ impl AppContext {
                                         certificate_id
                                     );
 
-                                    if self
+                                    match self
                                         .tce_cli
                                         .get_double_echo_channel()
                                         .send(DoubleEchoCommand::Broadcast {
@@ -58,14 +60,24 @@ impl AppContext {
                                             cert,
                                             pending_id,
                                         })
+                                        .map_err(TrySendError::from)
                                         .await
-                                        .is_err()
                                     {
-                                        error!(
-                                            "Unable to send DoubleEchoCommand::Broadcast command \
-                                             to double echo for {}",
-                                            certificate_id
-                                        );
+                                        Err(TrySendError::Full(_)) => {
+                                            error!(
+                                                "Unable to send DoubleEchoCommand::Broadcast command \
+                                                to double echo for {}, channel is full",
+                                                certificate_id
+                                            );
+                                        }
+                                        Err(TrySendError::Closed(_)) => {
+                                            error!(
+                                                "Unable to send DoubleEchoCommand::Broadcast command \
+                                                to double echo for {}, channel is closed",
+                                                certificate_id
+                                            );
+                                        }
+                                        Ok(_) => {}
                                     }
                                 }
 
@@ -136,15 +148,22 @@ impl AppContext {
                                     validator_id = validator_id
                                 );
 
-                                if let Err(e) = channel
+                                match channel
                                     .send(DoubleEchoCommand::Echo {
                                         signature: signature.into(),
                                         certificate_id,
                                         validator_id,
                                     })
+                                    .map_err(TrySendError::from)
                                     .await
                                 {
-                                    error!("Unable to pass received Echo message: {:?}", e);
+                                    Err(TrySendError::Full(_)) => {
+                                        error!("Unable to process Echo message due to DoubleEchoChannel being full");
+                                    }
+                                    Err(TrySendError::Closed(_)) => {
+                                        error!("Unable to process Echo message due to DoubleEchoChannel being closed");
+                                    }
+                                    Ok(_) => {}
                                 }
                             } else {
                                 error!("Unable to process Echo message due to invalid data");
@@ -181,15 +200,22 @@ impl AppContext {
                                     certificate_id = certificate_id,
                                     validator_id = validator_id
                                 );
-                                if let Err(e) = channel
+                                match channel
                                     .send(DoubleEchoCommand::Ready {
                                         signature: signature.into(),
                                         certificate_id,
                                         validator_id,
                                     })
+                                    .map_err(TrySendError::from)
                                     .await
                                 {
-                                    error!("Unable to pass received Ready message: {:?}", e);
+                                    Err(TrySendError::Full(_)) => {
+                                        error!("Unable to process Ready message due to DoubleEchoChannel being full");
+                                    }
+                                    Err(TrySendError::Closed(_)) => {
+                                        error!("Unable to process Ready message due to DoubleEchoChannel being closed");
+                                    }
+                                    Ok(_) => {}
                                 }
                             } else {
                                 error!("Unable to process Ready message due to invalid data");
