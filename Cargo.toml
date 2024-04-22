@@ -17,6 +17,7 @@ deprecated-in-future = "warn"
 
 [profile.release]
 strip = true
+debug = true
 
 [workspace.dependencies]
 topos-core = { path = "./crates/topos-core", default-features = false }
