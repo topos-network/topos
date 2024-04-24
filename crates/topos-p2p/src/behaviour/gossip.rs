@@ -25,7 +25,7 @@ use crate::{constants, event::ComposedEvent, TOPOS_ECHO, TOPOS_GOSSIP, TOPOS_REA
 
 use super::HealthStatus;
 
-const MAX_BATCH_SIZE: usize = 1024 * 100;
+const MAX_BATCH_SIZE: usize = 1024 * 20;
 
 pub struct Behaviour {
     batch_size: usize,
