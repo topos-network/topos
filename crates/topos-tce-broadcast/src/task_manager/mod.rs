@@ -117,7 +117,7 @@ impl TaskManager {
                     self.next_pending_certificate();
                 }
 
-                let Some(msg) = self.message_receiver.recv() {
+                Some(msg) = self.message_receiver.recv() => {
                     match msg {
                         DoubleEchoCommand::Echo { certificate_id, .. } | DoubleEchoCommand::Ready { certificate_id, .. } => {
                             if let Some(task_context) = self.tasks.get(&certificate_id) {
