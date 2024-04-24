@@ -29,7 +29,7 @@ impl Default for SynchronizerBuilder {
             network_client: None,
             store: None,
             config: SynchronizationConfig::default(),
-            event_channel_size: 1024 * 20,
+            event_channel_size: 1024,
             shutdown: None,
         }
     }

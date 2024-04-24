@@ -88,7 +88,7 @@ impl Runtime {
     }
 
     pub async fn launch(mut self) {
-        let mut health_update = tokio::time::interval(Duration::from_secs(1));
+        let mut health_update = tokio::time::interval(Duration::from_secs(10));
         let shutdowned: Option<oneshot::Sender<()>> = loop {
             tokio::select! {
                 shutdown = self.shutdown.recv() => {

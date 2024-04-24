@@ -107,7 +107,7 @@ impl TaskManager {
     }
 
     pub async fn run(mut self, shutdown_receiver: CancellationToken) {
-        let mut pending_certificate_interval = tokio::time::interval(Duration::from_millis(200));
+        let mut pending_certificate_interval = tokio::time::interval(Duration::from_millis(3));
 
         loop {
             tokio::select! {

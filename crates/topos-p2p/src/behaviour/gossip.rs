@@ -76,7 +76,7 @@ impl Behaviour {
             .unwrap_or(Ok(MAX_BATCH_SIZE))
             .unwrap();
         let gossipsub = gossipsub::ConfigBuilder::default()
-            .max_transmit_size(20 * 1024 * 1024)
+            .max_transmit_size(20 * 2048 * 2048)
             .validation_mode(gossipsub::ValidationMode::Strict)
             .message_id_fn(|msg_id| {
                 // Content based id
