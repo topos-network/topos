@@ -49,13 +49,14 @@ pub struct DoubleEcho {
     /// List of approved validators through smart contract and/or genesis
     pub validators: HashSet<ValidatorId>,
     pub validator_store: Arc<ValidatorStore>,
+    pub known_signatures: HashSet<Signature>,
     pub broadcast_sender: broadcast::Sender<CertificateDeliveredWithPositions>,
 
     pub task_manager_cancellation: CancellationToken,
 }
 
 impl DoubleEcho {
-    pub const MAX_BUFFER_SIZE: usize = 2048;
+    pub const MAX_BUFFER_SIZE: usize = 1024 * 20;
 
     #[allow(clippy::too_many_arguments)]
     pub fn new(
@@ -85,6 +86,7 @@ impl DoubleEcho {
             },
             shutdown,
             validator_store,
+            known_signatures: HashSet::new(),
             broadcast_sender,
             task_manager_cancellation: CancellationToken::new(),
         }
@@ -150,6 +152,12 @@ impl DoubleEcho {
                                         continue;
                                     }
 
+                                    if self.known_signatures.contains(&signature) {
+                                        debug!("ECHO message signature already known: {}", signature);
+                                        self.handle_echo(certificate_id, validator_id, signature).await;
+                                        continue;
+                                    }
+
                                     let mut payload = Vec::new();
                                     payload.extend_from_slice(certificate_id.as_array());
                                     payload.extend_from_slice(validator_id.as_bytes());
@@ -158,6 +166,8 @@ impl DoubleEcho {
                                         debug!("ECHO message signature cannot be verified from: {}", e);
                                         continue;
                                     }
+
+                                    self.known_signatures.insert(signature);
 
                                     self.handle_echo(certificate_id, validator_id, signature).await
                                 },
@@ -168,6 +178,13 @@ impl DoubleEcho {
                                         continue;
                                     }
 
+                                    if self.known_signatures.contains(&signature) {
+                                        debug!("READY message signature already known: {}", signature);
+                                        self.handle_ready(certificate_id, validator_id, signature).await;
+                                        continue;
+                                    }
+
+
                                     let mut payload = Vec::new();
                                     payload.extend_from_slice(certificate_id.as_array());
                                     payload.extend_from_slice(validator_id.as_bytes());
@@ -176,6 +193,8 @@ impl DoubleEcho {
                                         debug!("READY message signature cannot be verified from: {}", e);
                                         continue;
                                     }
+
+                                    self.known_signatures.insert(signature);
 
                                     self.handle_ready(certificate_id, validator_id, signature).await
                                 },

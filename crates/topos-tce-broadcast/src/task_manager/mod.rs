@@ -107,31 +107,35 @@ impl TaskManager {
     }
 
     pub async fn run(mut self, shutdown_receiver: CancellationToken) {
-        let mut interval = tokio::time::interval(Duration::from_secs(1));
+        let mut pending_certificate_interval = tokio::time::interval(Duration::from_micros(500));
+        let mut message_interval = tokio::time::interval(Duration::from_millis(100));
 
         loop {
             tokio::select! {
                 biased;
 
-                _ = interval.tick() => {
+                _ = pending_certificate_interval.tick() => {
                     self.next_pending_certificate();
                 }
-                Some(msg) = self.message_receiver.recv() => {
-                    match msg {
-                        DoubleEchoCommand::Echo { certificate_id, .. } | DoubleEchoCommand::Ready { certificate_id, .. } => {
-                            if let Some(task_context) = self.tasks.get(&certificate_id) {
-                                _ = task_context.sink.send(msg).await;
-                            } else {
-                                self.buffered_messages
-                                    .entry(certificate_id)
-                                    .or_default()
-                                    .push(msg);
-                            };
-                        }
-                        DoubleEchoCommand::Broadcast { ref cert, need_gossip, pending_id } => {
-                            trace!("Received broadcast message for certificate {} ", cert.id);
 
-                            self.create_task(cert, need_gossip, pending_id)
+                _ = message_interval.tick() => {
+                    if let Some(msg) = self.message_receiver.recv().await {
+                        match msg {
+                            DoubleEchoCommand::Echo { certificate_id, .. } | DoubleEchoCommand::Ready { certificate_id, .. } => {
+                                if let Some(task_context) = self.tasks.get(&certificate_id) {
+                                    _ = task_context.sink.send(msg).await;
+                                } else {
+                                    self.buffered_messages
+                                        .entry(certificate_id)
+                                        .or_default()
+                                        .push(msg);
+                                };
+                            }
+                            DoubleEchoCommand::Broadcast { ref cert, need_gossip, pending_id } => {
+                                trace!("Received broadcast message for certificate {} ", cert.id);
+
+                                self.create_task(cert, need_gossip, pending_id)
+                            }
                         }
                     }
                 }

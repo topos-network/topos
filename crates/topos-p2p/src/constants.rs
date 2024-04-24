@@ -12,9 +12,9 @@ lazy_static! {
     pub static ref EVENT_STREAM_BUFFER: usize = env::var("TCE_EVENT_STREAM_BUFFER")
         .ok()
         .and_then(|v| v.parse::<usize>().ok())
-        .unwrap_or(2048 * 2);
+        .unwrap_or(1024 * 20);
     pub static ref CAPACITY_EVENT_STREAM_BUFFER: usize = EVENT_STREAM_BUFFER
-        .checked_mul(10)
+        .checked_mul(1_000)
         .map(|v| {
             let r: usize = v.checked_div(100).unwrap_or(*EVENT_STREAM_BUFFER);
             r
@@ -23,7 +23,7 @@ lazy_static! {
     pub static ref COMMAND_STREAM_BUFFER_SIZE: usize = env::var("TCE_COMMAND_STREAM_BUFFER_SIZE")
         .ok()
         .and_then(|v| v.parse::<usize>().ok())
-        .unwrap_or(2048);
+        .unwrap_or(1024 * 20);
 }
 
 pub const DISCOVERY_PROTOCOL: &str = "/tce-disco/1";
