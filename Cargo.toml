@@ -17,6 +17,8 @@ deprecated-in-future = "warn"
 
 [profile.release]
 strip = true
+codegen-units = 1 # https://nnethercote.github.io/perf-book/build-configuration.html#codegen-units
+lto = "fat" # https://nnethercote.github.io/perf-book/build-configuration.html#link-time-optimization
 
 [workspace.dependencies]
 topos-core = { path = "./crates/topos-core", default-features = false }
@@ -40,10 +42,10 @@ tokio-stream = { version = "0.1", default-features = false }
 tower = "0.4"
 
 # Blockchain
-ethereum-types = { version = "0.13.1"}
-secp256k1 = {version = "0.27", features = ["recovery"]}
-tiny-keccak = {version = "1.5"}
-ethers = {version = "2.0.9", features = ["legacy", "abigen-online"]}
+ethereum-types = { version = "0.13.1" }
+secp256k1 = { version = "0.27", features = ["recovery"] }
+tiny-keccak = { version = "1.5" }
+ethers = { version = "2.0.9", features = ["legacy", "abigen-online"] }
 
 # Log, Tracing & telemetry
 opentelemetry = { version = "0.22", features = ["metrics"] }
@@ -58,7 +60,7 @@ tracing-opentelemetry = "0.23"
 tracing-subscriber = { version = "0.3", default-features = false }
 
 # gRPC
-prost = {version = "0.12"}
+prost = { version = "0.12" }
 tonic = { version = "0.11", default-features = false }
 tonic-build = { version = "0.11", default-features = false, features = [
     "prost", "transport"
@@ -72,7 +74,7 @@ http = "0.2.9"
 tower-http = { version = "0.4", features = ["cors"] }
 
 # P2P related
-libp2p = { version = "0.53", default-features = false, features = ["noise"]}
+libp2p = { version = "0.53", default-features = false, features = ["noise"] }
 
 # Serialization & Deserialization
 bincode = { version = "1.3", default-features = false }
@@ -93,5 +95,5 @@ reqwest = { version = "0.11", features = ["json"] }
 # Tests
 rstest = { version = "0.17.0", default-features = false }
 test-log = { version = "0.2", features = ["trace"] }
-env_logger = { version = "0.10.0"} # Needed by test-log to print traces in tests
-serial_test = {version = "0.9.0"}
+env_logger = { version = "0.10.0" } # Needed by test-log to print traces in tests
+serial_test = { version = "0.9.0" }

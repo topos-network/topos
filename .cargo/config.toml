@@ -4,3 +4,7 @@ xclippy = [
     "-Wclippy::all",
     "-Wclippy::disallowed-methods",
 ]
+
+# https://nnethercote.github.io/perf-book/build-configuration.html#cpu-specific-instructions
+[build]
+rustflags = ["-C", "target-cpu=native"]
