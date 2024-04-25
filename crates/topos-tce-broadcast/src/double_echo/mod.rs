@@ -15,7 +15,6 @@
 
 use crate::event::ProtocolEvents;
 use crate::{DoubleEchoCommand, SubscriptionsView};
-use lru::LruCache;
 use std::collections::HashSet;
 use std::num::NonZeroUsize;
 use std::sync::Arc;
@@ -50,7 +49,7 @@ pub struct DoubleEcho {
     /// List of approved validators through smart contract and/or genesis
     pub validators: HashSet<ValidatorId>,
     pub validator_store: Arc<ValidatorStore>,
-    pub known_signatures: LruCache<Signature, ()>,
+    pub known_signatures: HashSet<Signature>,
     pub broadcast_sender: broadcast::Sender<CertificateDeliveredWithPositions>,
 
     pub task_manager_cancellation: CancellationToken,
@@ -58,7 +57,6 @@ pub struct DoubleEcho {
 
 impl DoubleEcho {
     pub const MAX_BUFFER_SIZE: usize = 1024 * 20;
-    pub const KNOWN_SIGNATURES_CACHE_SIZE: usize = 15 * 10_000;
 
     #[allow(clippy::too_many_arguments)]
     pub fn new(
@@ -88,9 +86,7 @@ impl DoubleEcho {
             },
             shutdown,
             validator_store,
-            known_signatures: LruCache::new(
-                NonZeroUsize::new(Self::KNOWN_SIGNATURES_CACHE_SIZE).unwrap(),
-            ),
+            known_signatures: HashSet::new(),
             broadcast_sender,
             task_manager_cancellation: CancellationToken::new(),
         }
@@ -171,7 +167,7 @@ impl DoubleEcho {
                                         continue;
                                     }
 
-                                    self.known_signatures.push(signature, ());
+                                    self.known_signatures.insert(signature);
 
                                     self.handle_echo(certificate_id, validator_id, signature).await
                                 },
@@ -197,7 +193,7 @@ impl DoubleEcho {
                                         continue;
                                     }
 
-                                    self.known_signatures.push(signature, ());
+                                    self.known_signatures.insert(signature);
 
                                     self.handle_ready(certificate_id, validator_id, signature).await
                                 },
