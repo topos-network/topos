@@ -15,17 +15,18 @@
 
 use crate::event::ProtocolEvents;
 use crate::{DoubleEchoCommand, SubscriptionsView};
+use lru::LruCache;
 use std::collections::HashSet;
+use std::num::NonZeroUsize;
 use std::sync::Arc;
 use tokio::sync::{broadcast, mpsc, oneshot};
 use tokio_util::sync::CancellationToken;
 use topos_config::tce::broadcast::ReliableBroadcastParams;
 use topos_core::{types::ValidatorId, uci::CertificateId};
 use topos_crypto::messages::{MessageSigner, Signature};
-use topos_tce_storage::store::ReadStore;
 use topos_tce_storage::types::CertificateDeliveredWithPositions;
 use topos_tce_storage::validator::ValidatorStore;
-use tracing::{debug, error, info, warn};
+use tracing::{debug, info, warn};
 
 pub mod broadcast_state;
 
@@ -49,7 +50,7 @@ pub struct DoubleEcho {
     /// List of approved validators through smart contract and/or genesis
     pub validators: HashSet<ValidatorId>,
     pub validator_store: Arc<ValidatorStore>,
-    pub known_signatures: HashSet<Signature>,
+    pub known_signatures: LruCache<Signature, ()>,
     pub broadcast_sender: broadcast::Sender<CertificateDeliveredWithPositions>,
 
     pub task_manager_cancellation: CancellationToken,
@@ -57,6 +58,7 @@ pub struct DoubleEcho {
 
 impl DoubleEcho {
     pub const MAX_BUFFER_SIZE: usize = 1024 * 20;
+    pub const KNOWN_SIGNATURES_CACHE_SIZE: usize = 15 * 10_000;
 
     #[allow(clippy::too_many_arguments)]
     pub fn new(
@@ -86,7 +88,9 @@ impl DoubleEcho {
             },
             shutdown,
             validator_store,
-            known_signatures: HashSet::new(),
+            known_signatures: LruCache::new(
+                NonZeroUsize::new(Self::KNOWN_SIGNATURES_CACHE_SIZE).unwrap(),
+            ),
             broadcast_sender,
             task_manager_cancellation: CancellationToken::new(),
         }
@@ -167,7 +171,7 @@ impl DoubleEcho {
                                         continue;
                                     }
 
-                                    self.known_signatures.insert(signature);
+                                    self.known_signatures.push(signature, ());
 
                                     self.handle_echo(certificate_id, validator_id, signature).await
                                 },
@@ -184,7 +188,6 @@ impl DoubleEcho {
                                         continue;
                                     }
 
-
                                     let mut payload = Vec::new();
                                     payload.extend_from_slice(certificate_id.as_array());
                                     payload.extend_from_slice(validator_id.as_bytes());
@@ -194,7 +197,7 @@ impl DoubleEcho {
                                         continue;
                                     }
 
-                                    self.known_signatures.insert(signature);
+                                    self.known_signatures.push(signature, ());
 
                                     self.handle_ready(certificate_id, validator_id, signature).await
                                 },
@@ -230,26 +233,14 @@ impl DoubleEcho {
         validator_id: ValidatorId,
         signature: Signature,
     ) {
-        match self.validator_store.get_certificate(&certificate_id) {
-            Err(storage_error) => error!(
-                "Unable to get the Certificate {} due to {:?}",
-                &certificate_id, storage_error
-            ),
-            Ok(Some(_)) => debug!(
-                "Certificate {} already delivered, ignoring echo",
-                &certificate_id
-            ),
-            Ok(None) => {
-                let _ = self
-                    .task_manager_message_sender
-                    .send(DoubleEchoCommand::Echo {
-                        validator_id,
-                        certificate_id,
-                        signature,
-                    })
-                    .await;
-            }
-        }
+        let _ = self
+            .task_manager_message_sender
+            .send(DoubleEchoCommand::Echo {
+                validator_id,
+                certificate_id,
+                signature,
+            })
+            .await;
     }
 
     pub async fn handle_ready(
@@ -258,25 +249,13 @@ impl DoubleEcho {
         validator_id: ValidatorId,
         signature: Signature,
     ) {
-        match self.validator_store.get_certificate(&certificate_id) {
-            Err(storage_error) => error!(
-                "Unable to get the Certificate {} due to {:?}",
-                &certificate_id, storage_error
-            ),
-            Ok(Some(_)) => debug!(
-                "Certificate {} already delivered, ignoring echo",
-                &certificate_id
-            ),
-            Ok(None) => {
-                let _ = self
-                    .task_manager_message_sender
-                    .send(DoubleEchoCommand::Ready {
-                        validator_id,
-                        certificate_id,
-                        signature,
-                    })
-                    .await;
-            }
-        }
+        let _ = self
+            .task_manager_message_sender
+            .send(DoubleEchoCommand::Ready {
+                validator_id,
+                certificate_id,
+                signature,
+            })
+            .await;
     }
 }

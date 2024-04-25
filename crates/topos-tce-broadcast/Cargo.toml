@@ -24,6 +24,7 @@ topos-config = { path = "../topos-config/" }
 topos-metrics = { path = "../topos-metrics/" }
 topos-tce-storage = { path = "../topos-tce-storage/" }
 topos-crypto = { path = "../topos-crypto" }
+lru.workspace = true
 
 [dev-dependencies]
 criterion = { version = "0.5.1", features = ["async_futures", "async_tokio"] }

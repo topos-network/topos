@@ -32,6 +32,7 @@ lazy_static = "1"
 rand = { version = "0.8", default-features = false }
 rand_core = { version = "0.6", default-features = false }
 rand_distr = { version = "0.4", default-features = false }
+lru = "0.12.3"
 
 # Async & Tokio related
 async-stream = { version = "0.3", default-features = false }
