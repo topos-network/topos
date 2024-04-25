@@ -16,7 +16,6 @@
 use crate::event::ProtocolEvents;
 use crate::{DoubleEchoCommand, SubscriptionsView};
 use std::collections::HashSet;
-use std::num::NonZeroUsize;
 use std::sync::Arc;
 use tokio::sync::{broadcast, mpsc, oneshot};
 use tokio_util::sync::CancellationToken;
