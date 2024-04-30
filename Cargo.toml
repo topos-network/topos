@@ -15,11 +15,18 @@ missing_docs = "allow"
 # Warn
 deprecated-in-future = "warn"
 
+# Use this for performance
+#[profile.release]
+#strip = true
+#codegen-units = 1 # https://nnethercote.github.io/perf-book/build-configuration.html#codegen-units
+#lto = "fat" # https://nnethercote.github.io/perf-book/build-configuration.html#link-time-optimization
+#debug = false 
+
+# Use this for perf analysis
 [profile.release]
-strip = true
-codegen-units = 1 # https://nnethercote.github.io/perf-book/build-configuration.html#codegen-units
-lto = "fat" # https://nnethercote.github.io/perf-book/build-configuration.html#link-time-optimization
-debug = true # So we can un `perf` on the Rust binary
+strip = false
+debug = true
+lto = false
 
 [workspace.dependencies]
 topos-core = { path = "./crates/topos-core", default-features = false }
