@@ -22,9 +22,9 @@ use topos_core::{
 use tracing::{debug, error, info, info_span, warn, Instrument, Span};
 use tracing_opentelemetry::OpenTelemetrySpanExt;
 
-const CERTIFICATE_OUTBOUND_CHANNEL_SIZE: usize = 100;
-const CERTIFICATE_INBOUND_CHANNEL_SIZE: usize = 100;
-const TCE_PROXY_COMMAND_CHANNEL_SIZE: usize = 100;
+const CERTIFICATE_OUTBOUND_CHANNEL_SIZE: usize = 1024 * 5;
+const CERTIFICATE_INBOUND_CHANNEL_SIZE: usize = 1024 * 5;
+const TCE_PROXY_COMMAND_CHANNEL_SIZE: usize = 1024 * 5;
 
 // Maximum backoff retry timeout in seconds (1 hour)
 const TCE_SUBMIT_CERTIFICATE_BACKOFF_TIMEOUT: Duration = Duration::from_secs(3600);

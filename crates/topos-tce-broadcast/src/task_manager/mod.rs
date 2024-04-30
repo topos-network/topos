@@ -2,8 +2,10 @@ use crate::event::ProtocolEvents;
 use futures::stream::FuturesUnordered;
 use futures::Future;
 use futures::StreamExt;
+use lru::LruCache;
 use std::collections::HashMap;
 use std::future::IntoFuture;
+use std::num::NonZeroUsize;
 use std::pin::Pin;
 use std::sync::Arc;
 use std::time::Duration;
@@ -52,11 +54,14 @@ pub struct TaskManager {
     pub thresholds: ReliableBroadcastParams,
     pub validator_id: ValidatorId,
     pub validator_store: Arc<ValidatorStore>,
+    pub delivered_certificates: LruCache<CertificateId, ()>,
     pub broadcast_sender: broadcast::Sender<CertificateDeliveredWithPositions>,
     pub latest_pending_id: PendingCertificateId,
 }
 
 impl TaskManager {
+    pub const DELIVERED_CERTIFICATES_CACHE_SIZE: usize = 20_000;
+
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         message_receiver: mpsc::Receiver<DoubleEchoCommand>,
@@ -79,6 +84,9 @@ impl TaskManager {
             message_signer,
             thresholds,
             validator_store,
+            delivered_certificates: LruCache::new(
+                NonZeroUsize::new(Self::DELIVERED_CERTIFICATES_CACHE_SIZE).unwrap(),
+            ),
             broadcast_sender,
             latest_pending_id: 0,
         }
@@ -107,18 +115,24 @@ impl TaskManager {
     }
 
     pub async fn run(mut self, shutdown_receiver: CancellationToken) {
-        let mut interval = tokio::time::interval(Duration::from_secs(1));
+        let mut pending_certificate_interval = tokio::time::interval(Duration::from_millis(10));
 
         loop {
             tokio::select! {
                 biased;
 
-                _ = interval.tick() => {
+                _ = pending_certificate_interval.tick() => {
                     self.next_pending_certificate();
                 }
+
                 Some(msg) = self.message_receiver.recv() => {
                     match msg {
                         DoubleEchoCommand::Echo { certificate_id, .. } | DoubleEchoCommand::Ready { certificate_id, .. } => {
+                            if self.delivered_certificates.contains(&certificate_id) {
+                                trace!("Received message for certificate {} that has already been delivered", certificate_id);
+                                continue;
+                            }
+
                             if let Some(task_context) = self.tasks.get(&certificate_id) {
                                 _ = task_context.sink.send(msg).await;
                             } else {
@@ -129,6 +143,11 @@ impl TaskManager {
                             };
                         }
                         DoubleEchoCommand::Broadcast { ref cert, need_gossip, pending_id } => {
+                            if self.delivered_certificates.contains(&cert.id) {
+                                trace!("Received message for certificate {} that has already been delivered", cert.id);
+                                continue;
+                            }
+
                             trace!("Received broadcast message for certificate {} ", cert.id);
 
                             self.create_task(cert, need_gossip, pending_id)
@@ -136,13 +155,12 @@ impl TaskManager {
                     }
                 }
 
-
                 Some((certificate_id, status)) = self.running_tasks.next() => {
                     if let TaskStatus::Success = status {
+                        self.delivered_certificates.put(certificate_id, ());
                         trace!("Task for certificate {} finished successfully", certificate_id);
                         self.tasks.remove(&certificate_id);
                         DOUBLE_ECHO_ACTIVE_TASKS_COUNT.dec();
-
                     } else {
                         error!("Task for certificate {} finished unsuccessfully", certificate_id);
                     }
